@@ -220,7 +220,7 @@ csp *mx2csp(const mxArray *A){
 	out->ny=mxGetN(A);
 	out->p=(spint*)mxGetJc(A);
 	out->i=(spint*)mxGetIr(A);
-	out->x=mxGetData(A);
+	out->x=(dcomplex*)mxGetData(A);
 	out->nzmax=mxGetNzmax(A);
     }
     return out;
@@ -274,7 +274,7 @@ cmat *mx2c(const mxArray *A){
     }
     cmat *out=0;
     if(A && mxGetM(A) && mxGetN(A)){
-	out=cnew_ref(mxGetM(A), mxGetN(A), mxGetData(A));
+	out=cnew_ref(mxGetM(A), mxGetN(A), (dcomplex*)mxGetData(A));
     }
     return out;
 #else

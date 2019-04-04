@@ -15,12 +15,12 @@ include $(top_srcdir)/aminclude.am
 #dist-hook:
 #	rm -rf $(distdir)/configure.ac 
 
-#For documentation only.
-all-local:$(srcdir)/math/tmp.c
-$(srcdir)/math/tmp.c:$(srcdir)/math/mat.c $(srcdir)/math/cell.c $(srcdir)/math/matbin.c \
-	$(srcdir)/math/spbin.c $(srcdir)/math/sp.c
-	@echo "#define USE_COMPLEX" > $(srcdir)/math/tmp.c
-	@cat $(srcdir)/math/mat.c $(srcdir)/math/cell.c $(srcdir)/math/matbin.c $(srcdir)/math/spbin.c $(srcdir)/math/sp.c >> $(srcdir)/math/tmp.c
+#For documentation only. Enable USE_COMPLEX switch for complex function documentation.
+MATH_SOURCE=$(srcdir)/math/mat.cpp $(srcdir)/math/cell.cpp $(srcdir)/math/matbin.cpp $(srcdir)/math/spbin.cpp $(srcdir)/math/sp.cpp
+all-local:$(srcdir)/math/tmp.cpp
+$(srcdir)/math/tmp.cpp:$(MATH_SOURCE)
+	@echo "#define USE_COMPLEX" > $(srcdir)/math/tmp.cpp
+	@cat $(MATH_SOURCE) >> $(srcdir)/math/tmp.cpp
 
 EXTRA_DIST = doxygen.cfg docs version.h scripts config
 

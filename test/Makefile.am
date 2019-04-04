@@ -1,5 +1,6 @@
-AM_CFLAGS=$(OPTS) -I $(top_srcdir)
+AM_CXXFLAGS=$(OPTS) -I $(top_srcdir)
 AM_LDFLAGS=$(LDOPTS) 
+AM_DEFAULT_SOURCE_EXT = .cpp
 LDADD=../lib/libaos.la $(LDEXE_FULL)
 
 bin_PROGRAMS=test_mat test_plot test_draw test_rand test_sparse test_cmat2		\
