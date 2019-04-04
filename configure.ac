@@ -201,7 +201,7 @@ case "$CN" in
 	    minor=${minor%%.*}
 	    if test $major -lt 11 ;then
 		AC_MSG_ERROR([OpenMP is not supported by ICC $CXX_VER])
-		unset OPENMP_CXXFLAGS
+		unset OPENMP_CFLAGS
 	    fi
 	fi
 	;;
@@ -238,7 +238,7 @@ case "$CN" in
 	    #GCC introduced openmp task in 4.4
 	    if test $major -le 4 -a $minor -le 4 ;then
 		AC_MSG_ERROR([OpenMP is not supported by GCC $CXX_VER])
-		unset OPENMP_CXXFLAGS
+		unset OPENMP_CFLAGS
 	    fi
 	fi
 	;;
@@ -270,11 +270,11 @@ OPTScc="${!optname1} ${!optname2} ${!optname3} ${!optname4}"
 echo OPTScc=$OPTScc
 unset optname1 optname2 optname3 optname4
 
-if test -z "$OPENMP_CXXFLAGS" ;then
+if test -z "$OPENMP_CFLAGS" ;then
     OPTScc+=" -pthread" #enables pthreads feature and links in the library
     AC_DEFINE(HAS_OPENMP,[0],["Openmp is disabled"])
 else
-    OPTScc+=" $OPENMP_CXXFLAGS"
+    OPTScc+=" $OPENMP_CFLAGS"
     AC_DEFINE(HAS_OPENMP,[1],["Openmp is enabled"])
 fi
 OPTSextra=""
@@ -466,8 +466,8 @@ compile(){
     download $name $file ${TMP_DIR}/$name
     fnlog=${TMP_DIR}/compile.log
     echo "Compiling $name. Check $fnlog for details"
-    echo CXXFLAGS=$CXXFLAGS > $fnlog
-    if (cd ${TMP_DIR}/$name/* && export CXXFLAGS="$CXXFLAGS -O3"  && \
+    echo CFLAGS=$CFLAGS > $fnlog
+    if (cd ${TMP_DIR}/$name/* && export CFLAGS="$CFLAGS -O3"  && \
 	(./configure --libdir=${LIB_DIR} $@ --prefix=${PRE_DIR} >> $fnlog 2>&1|| \
 	cmake -DCMAKE_INSTALL_PREFIX:PATH=${PRE_DIR} $@ >> $fnlog 2>&1 ) && \
 	make -j4 install >> $fnlog 2>&1) ;then
@@ -597,7 +597,7 @@ else
     AC_CHECK_HEADERS([fftw3.h],[], [has_fftw='no'])
     if test "$has_fftw" = "no" ;then #fftw does not exist in system.
 	FLAGS="--enable-threads --enable-shared --enable-static"
-	if test -n "$OPENMP_CXXFLAGS" ;then
+	if test -n "$OPENMP_CFLAGS" ;then
             FLAGS+=" --enable-openmp"
 	fi
 	compile FFTW fftw.tar.bz2 $FLAGS
@@ -697,14 +697,7 @@ if test "$with_gtk" != "no" ;then
 	GTK_CFLAGS=""
 	GTK_LIBS=""
     fi
-    if false ;then
-	#Temporarily include GTK_CXXFLAGS in CXXFLAGS to enable header search.
-	CXXFLAGS_SAVE=$CXXFLAGS
-	CXXFLAGS="$CXXFLAGS $GTK_CFLAGS $MON_CFLAGS"
-	AC_CHECK_HEADERS([gtk/gtk.h], [], [comp_draw="no"; comp_mon="no"])
-	AC_CHECK_HEADERS([libnotify/notify.h], [], [comp_monn="no"])
-	CXXFLAGS=$CXXFLAGS_SAVE
-    fi
+
     AM_CONDITIONAL(DRAW, test x$comp_draw = xyes)
     AM_CONDITIONAL(MON,  test x$comp_mon  = xyes)
 
@@ -797,7 +790,7 @@ if test "$with_matlab" != "no" ;then
 	AC_CHECK_LIB([mx], [mxGetPr], [mex_lib="yes"], [mex_lib="no"], [$LDMEX])
     fi
     if test x$mex_lib = xyes ;then
-    	MEXOPT="${MEXOPT} -I${MEXDIR}/../extern/include -DMATLAB_MEX_FILE $OPENMP_CXXFLAGS" 
+    	MEXOPT="${MEXOPT} -I${MEXDIR}/../extern/include -DMATLAB_MEX_FILE $OPENMP_CFLAGS" 
 	LIBMEX=" -lmwlapack -lmwblas -lmx -lmex -lmat -lut -lstdc++ -lz -lm -ldl -lfftw3"
 	#some MATLAB distribution has libmwfftw3.so, some only has libmwfftw3.so.3
 	#AC_CHECK_LIB([mwfftw3], [fftw_execute], [LIBMEX+=" -lmwfftw3"], [LIBMEX+=" -l:libmwfftw3.so.3"], [$LDMEX])
@@ -927,8 +920,8 @@ if test "$with_cuda" != "no" ;then
     fi
     optname=${ccprefix}_${CCN}
     CCBINOPT+=" ${!optname}"
-    if test -n "$OPENMP_CXXFLAGS";then
-        CCBINOPT+=" $OPENMP_CXXFLAGS"
+    if test -n "$OPENMP_CFLAGS";then
+        CCBINOPT+=" $OPENMP_CFLAGS"
     fi
 else
     cudaver="no"
