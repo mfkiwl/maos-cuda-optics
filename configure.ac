@@ -1,5 +1,5 @@
 AC_PREREQ(2.57)
-AC_INIT(maos, 2.3.0, lianqiw@gmail.com)
+AC_INIT(maos, 3.0.0, lianqiw@gmail.com)
 AM_INIT_AUTOMAKE([1.9.6 gnu -Wall no-define subdir-objects])
 #silent building
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])]) 
@@ -147,7 +147,7 @@ AC_ARG_ENABLE(scheduler,AS_HELP_STRING([--disable-scheduler],["Disable built in 
 AC_ARG_ENABLE(websockets,AS_HELP_STRING([--disable-websockets],[Disable websockets (default: enabled)]), [use_websockets="$enableval"], [use_websockets="yes"])
 AC_ARG_ENABLE(mkl, AS_HELP_STRING([--enable-mkl], ["Prefer to use MKL"]), [use_mkl="$enableval"], [use_mkl="default"])
 AC_ARG_WITH(cuda, AS_HELP_STRING([--with-cuda[=DIR]],[With cuda support]), [CUDADIR=${withval}], [CUDADIR="$CUDADIR_AUTO"])
-AC_ARG_WITH(ccbin, AS_HELP_STRING([--with-ccbin=CC,],[Specify CCBIN for nvcc]), [CCBIN=${withval}], [CCBIN=${CC}])
+AC_ARG_WITH(ccbin, AS_HELP_STRING([--with-ccbin=CC,],[Specify CCBIN for nvcc]), [CCBIN=${withval}], [CCBIN=${CXX}])
 AC_ARG_WITH(gtk,  AS_HELP_STRING([--with-gtk[=DIR]],[Enable gtk support]), [GTKDIR=${withval}], [GTKDIR=])
 AC_ARG_ENABLE(gtk-3, AS_HELP_STRING([--enable-gtk-3],[Using GTK+-3]), [use_gtk_3="$enableval"], [use_gtk_3="default"])
 AC_ARG_WITH(matlab, AS_HELP_STRING([--with-matlab[=DIR]],[Enable compiling mex routines for matlab]), [MEXDIR=${withval}], [MEXDIR=${MEXDIR_AUTO}])
@@ -873,7 +873,7 @@ if test "$with_cuda" != "no" ;then
     cudaver="$($NVCC -V |grep release |cut -d ',' -f 2 |cut -d ' ' -f 3)"
     cudaver="${cudaver/.}"
     echo CUDA toolkit is $cudaver
-    NVCC+=" $CXXFLAGS_CPU"
+    #NVCC+=" $CXXFLAGS_CPU"
     if test -n "$CCBIN" -a "$with_ccbin" != "no" ;then
 	CCBIN="${CCBIN%% *}"
 	NVCC+=" -ccbin ${CCBIN%% *}"
@@ -902,10 +902,19 @@ if test "$with_cuda" != "no" ;then
     if test "$host_cpu" = "x86_64" ;then
         CUDAOPT+=" -DDLONG"
     fi
-    #CUDAOPT+=" -std=c++11"
     CUDAOPT+=" -Wno-deprecated-gpu-targets"
     CCBINOPT="$OPTScommon $OPTSprof $OPTSextra -fPIC $CXXFLAGS -Wno-unused-parameter"
     CCBINOPT="${CCBINOPT/-fpermissive/}"
+    if test "$cudaver" -lt 100 ;then
+	CUDA_CXX11=0 #Enable C++11 mode emits cc1 warning for version <10.0
+    else
+	CUDA_CXX11=1
+    fi
+    if test $CUDA_CXX11 -eq 1 ;then
+	CUDAOPT+=" -std=c++11"
+    else
+	CCBINOPT="${CCBINOPT/-std=c++11/}"
+    fi
     LIBCUDA+=" -lcurand -lcusparse -lcufft -lcublas -lcudart"
     if $CCBIN -v 2>&1 |grep clang ;then
 	CCN=CLANG

@@ -50,7 +50,7 @@ void default_quitfun(const char *msg);
 #include <cmath>
 using std::signbit;
 using std::isfinite;
-using std::isnan;
+//using std::isnan;
 using std::strerror;
 #else//C99 mode or CUDA.
 #include <signal.h>

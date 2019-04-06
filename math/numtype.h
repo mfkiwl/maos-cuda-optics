@@ -74,7 +74,7 @@ static inline int wrap(long index, long n){
 #include <cmath>
 using std::real;
 using std::conj;
-using std::isinf;
+//using std::isinf;
 using std::complex;
 typedef complex<double> dcomplex;
 typedef complex<float> fcomplex;

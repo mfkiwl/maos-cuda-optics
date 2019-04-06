@@ -38,15 +38,20 @@ case $D in
 
 esac
 fnlog=maos_check_${D}.log
+fnres=maos_check_${D}.res
 echo > $fnlog
-
+echo "D is ${D}m. DM order is $((D*2))." > $fnres
 ii=0
 
 function run_maos(){
+    kind=$1
+    shift
+    echo $kind >>$fnlog
     ./maos sim.end=1000 $args "$*" >> $fnlog
     if [ $? == 0 ];then
 	RMS[ii]=$(tail -n5 $fnlog |grep 'Mean:' |cut -d ':' -f 2)
 	a=${RMS[$ii]%.*}
+	ans=0
     else
 	RMS[ii]='error'
 	a=0
@@ -54,76 +59,57 @@ function run_maos(){
     fi
 
     b=${REF[$ii]%.*}
-    echo -n "${RMS[$ii]} nm, Ref: ${REF[$ii]} nm, "
+    echo -n $kind >>$fnres
+    echo -n "${RMS[$ii]} nm, Ref: ${REF[$ii]} nm, " >>$fnres
     if [ $a -ne 0 -a "$b" != "error" ];then
-	echo $(((a-b)*100/b))%
+	echo $(((a-b)*100/b))% >> $fnres
     else
-	echo
+	echo >> $fnres
     fi
     ii=$((ii+1)) 
 }
 
-echo "D is ${D}m. DM order is $((D*2))."
-
-echo -n "Ideal fit (cpu): "
-run_maos sim.idealfit=1 -g-1 
 
 
-echo -n "Ideal tomo (cpu):"
-run_maos sim.idealtomo=1 -g-1 
+run_maos "Ideal fit (cpu): " sim.idealfit=1 -g-1 
 
-echo -n "LGS MCAO (inte): "
-run_maos recon.split=0 tomo.precond=0
+run_maos "Ideal tomo (cpu):" sim.idealtomo=1 -g-1 
 
-echo -n "LGS MCAO (CG):   "
-run_maos tomo.precond=0
+run_maos "LGS MCAO (inte): " recon.split=0 tomo.precond=0
 
-echo -n "LGS MCAO (FDPCG):"
-run_maos tomo.precond=1
+run_maos "LGS MCAO (CG):   " tomo.precond=0
 
-echo -n "LGS MCAO (CBS):  "
-run_maos tomo.alg=0 fit.alg=0
+run_maos "LGS MCAO (FDPCG):" tomo.precond=1
+
+run_maos "LGS MCAO (CBS):  " tomo.alg=0 fit.alg=0
 
 if [ $D -le 10 ];then
-echo -n "LGS MCAO (SVD):  "
-run_maos tomo.alg=2 fit.alg=2
+run_maos "LGS MCAO (SVD):  " tomo.alg=2 fit.alg=2
 
-echo -n "LGS MCAO (MVM):  "
-run_maos atmr.os=[2] tomo.precond=1 tomo.maxit=100 fit.alg=0 recon.mvm=1
+run_maos "LGS MCAO (MVM):  " atmr.os=[2] tomo.precond=1 tomo.maxit=100 fit.alg=0 recon.mvm=1
 fi
 
-echo -n "LGS MOAO:        "
-run_maos evl.moao=0 moao.dx=[1/2]
+run_maos "LGS MOAO:        " evl.moao=0 moao.dx=[1/2]
 
-echo -n "LGS GLAO (inte): "
-run_maos dm_single.conf  recon.glao=1 recon.split=0 wfs_lgs_ttf.conf
+run_maos "LGS GLAO (inte): " dm_single.conf  recon.glao=1 recon.split=0 wfs_lgs_ttf.conf
 
-echo -n "LGS GLAO (split):"
-run_maos dm_single.conf  recon.glao=1 recon.split=1 wfs_lgs_ttf.conf
+run_maos "LGS GLAO (split):" dm_single.conf  recon.glao=1 recon.split=1 wfs_lgs_ttf.conf
 
-echo -n "NGS SCAO (inte): "
-run_maos -cscao_ngs.conf recon.split=0
+run_maos "NGS SCAO (inte): " -cscao_ngs.conf recon.split=0
 
-echo -n "NGS SCAO (split):"
-run_maos -cscao_ngs.conf recon.split=1
+run_maos "NGS SCAO (split):" -cscao_ngs.conf recon.split=1
 
-echo -n "NGS MCAO (inte): "
-run_maos -cmcao_ngs.conf recon.split=0
+run_maos "NGS MCAO (inte): " -cmcao_ngs.conf recon.split=0
 
-echo -n "NGS MCAO (split):"
-run_maos -cmcao_ngs.conf recon.split=1
+run_maos "NGS MCAO (split):" -cmcao_ngs.conf recon.split=1
 
-echo -n "SCAO LGS (inte): "
-run_maos -cscao_lgs.conf recon.split=0
+run_maos "SCAO LGS (inte): " -cscao_lgs.conf recon.split=0
 
-echo -n "SCAO LGS (split):"
-run_maos -cscao_lgs.conf recon.split=1
+run_maos "SCAO LGS (split):" -cscao_lgs.conf recon.split=1
 
-echo -n "LGS LTAO (inte): "
-run_maos dm_single.conf fov_oa.conf recon.split=0
+run_maos "LGS LTAO (inte): " dm_single.conf fov_oa.conf recon.split=0
 
-echo -n "LGS LTAO (split):"
-run_maos dm_single.conf fov_oa.conf recon.split=1
+run_maos "LGS LTAO (split):" dm_single.conf fov_oa.conf recon.split=1
 
 echo ${RMS[*]}
 

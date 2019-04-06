@@ -40,7 +40,7 @@ ___bin_gpu_mvm_SOURCES=gpu_mvm.cpp
 	@$(NVCC) $(CUDAOPT) -M $< -MT $@ > $(DEPDIR)/$*.Po
 
 .cu.lo:
-	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(NVCC) $(CUDAOPT) --compiler-options "$(CCBINOPT) " -c $< -o $@ 
+	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(NVCC) $(CUDAOPT) --compiler-options "$(CCBINOPT) " -c $< -o $@ 
 	@$(NVCC) $(CUDAOPT) -M $< -MT $@ > $(DEPDIR)/$*.Po
 
 -include $(SRCS:%.cu=$(DEPDIR)/%.Po)
