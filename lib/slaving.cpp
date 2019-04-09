@@ -85,20 +85,21 @@ dspcell *slaving(loccell *aloc,  /**<[in]The actuator grid*/
 	int nslave=0;
   	double *actcpl= actcplc->p[idm]->p;
 	double *actcpl0 = actcpl-1;
+	const long *isstuck=(actstuck&&actstuck->p[idm])?actstuck->p[idm]->p:0;
+	const long *isfloat=(actfloat&&actfloat->p[idm])?actfloat->p[idm]->p:0;
 	for(int iact=0; iact<nact; iact++){
-	    if(actstuck && actstuck->p[idm]->p[iact]){
+	    if(isstuck && isstuck[iact]){
 		actcpl[iact] = 1;/*always Skip the stuck actuators. */
 		nslave++;
 	    }
-	    if(actfloat && actfloat->p[idm]->p[iact]){
+	    if(isfloat && isfloat[iact]){
 		actcpl[iact] = 0;/*always include the float actuators */
 	    }
 	    if(actcpl[iact]<thres){
 		nslave++;
 	    }
 	}
-	const long *stuck=actstuck?(actstuck->p[idm]?actstuck->p[idm]->p:0):0;
-	const long *floated=actfloat?(actfloat->p[idm]?actfloat->p[idm]->p:0):0;
+
 
 	nslavetot+=nslave;
 	info("dm %d: there are %d slave actuators\n", idm, nslave);
@@ -121,7 +122,7 @@ dspcell *slaving(loccell *aloc,  /**<[in]The actuator grid*/
 	long count=0;
 	for(int iact=0; iact<nact; iact++){
 	    pp[iact]=count;
-	    if(stuck && stuck[iact]){/*limit the strength of stuck actuators. */
+	    if(isstuck && isstuck[iact]){/*limit the strength of stuck actuators. */
 		pi[count]=iact;
 		px[count]=scl;
 		count++;
@@ -137,7 +138,7 @@ dspcell *slaving(loccell *aloc,  /**<[in]The actuator grid*/
 			    continue;/*skip self and corner */
 			}
 			int kact1=loc_map_get(map, mapx+ix, mapy+iy);
-			if(kact1>0 && (!stuck || !stuck[kact1-1])){
+			if(kact1>0 && (!isstuck || !isstuck[kact1-1])){
 			    near_exist++;
 			    if(actcpl0[kact1]>thres2){//better than this one.
 				near_active++;
@@ -147,42 +148,43 @@ dspcell *slaving(loccell *aloc,  /**<[in]The actuator grid*/
 		    }
 		}
 		if(!near_exist){
-		    error("This is an isolated actuator\n");
-		}
-		/*
-		  neighbors are defined as the four pixels to the left, right,
-		  top and bottom.  If some of the neighbors are active, use the
-		  average of them for my value, otherwise, use the average of
-		  all neighbors.
-		*/
-		double value=0;
-		if(!near_active) value=-scl*0.1/near_exist;
-		double valsum=0;
-		/*part 1*/
-		for(int iy=-1; iy<2; iy++){
-		    for(int ix=-1; ix<2; ix++){
-			if(abs(ix+iy)!=1){
-			    continue;//skip self and corner
-			}
-			int kact1=loc_map_get(map, mapx+ix, mapy+iy);
-			if(kact1>0 && (!stuck || !stuck[kact1-1])){
-			    if(!near_active){
-				valsum+=(px[count]=value);
-				pi[count]=kact1-1;
-				count++;
-			    }else if(actcpl0[kact1]>actcpl[iact]){
-				valsum+=(px[count]=-scl*MAX(0.1,actcpl0[kact1]));
-				pi[count]=kact1-1;
-				count++;
+		    warning("This is an isolated actuator\n");
+		}else{
+		    /*
+		      neighbors are defined as the four pixels to the left, right,
+		      top and bottom.  If some of the neighbors are active, use the
+		      average of them for my value, otherwise, use the average of
+		      all neighbors.
+		    */
+		    double value=0;
+		    if(!near_active) value=-scl*0.1/near_exist;
+		    double valsum=0;
+		    /*part 1*/
+		    for(int iy=-1; iy<2; iy++){
+			for(int ix=-1; ix<2; ix++){
+			    if(abs(ix+iy)!=1){
+				continue;//skip self and corner
+			    }
+			    int kact1=loc_map_get(map, mapx+ix, mapy+iy);
+			    if(kact1>0 && (!isstuck || !isstuck[kact1-1])){
+				if(!near_active){
+				    valsum+=(px[count]=value);
+				    pi[count]=kact1-1;
+				    count++;
+				}else if(actcpl0[kact1]>actcpl[iact]){
+				    valsum+=(px[count]=-scl*MAX(0.1,actcpl0[kact1]));
+				    pi[count]=kact1-1;
+				    count++;
+				}
 			    }
 			}
 		    }
-		}
 		
-		/*part 2, matches negative sum of part 1*/
-		pi[count]=iact;
-		px[count]=-valsum;
-		count++;
+		    /*part 2, matches negative sum of part 1*/
+		    pi[count]=iact;
+		    px[count]=-valsum;
+		    count++;
+		}
 	    }/*if */
 	}/*for iact */
 	pp[nact]=count;
@@ -205,11 +207,11 @@ dspcell *slaving(loccell *aloc,  /**<[in]The actuator grid*/
 	    dfree(H);
 	    dfree(Hinv);
 	    dfree(mod);
-	    if(stuck || floated){
+	    if(isstuck || isfloat){
 		dmat*  pNW=NW->p[idm];
 		for(int iy=0; iy<NW->p[idm]->ny; iy++){
 		    for(int iact=0; iact<nact; iact++){
-			if((stuck && stuck[iact])||(floated && floated[iact])){
+			if((isstuck && isstuck[iact])||(isfloat && isfloat[iact])){
 			    P(pNW,iact,iy)=0;
 			}
 		    }
@@ -490,7 +492,7 @@ dspcell* act_float_interp(loccell *aloc,  /**<[in] Actuator grid array*/
 	const double *locy=aloc->p[idm]->locy;
 	long nact=aloc->p[idm]->nloc;
 	/*actuator that is floating */
-	long *isfloat=actfloat?(actfloat->p[idm]?actfloat->p[idm]->p:0):0;
+	long *isfloat=(actfloat&&actfloat->p[idm])?actfloat->p[idm]->p:0;
 	dsp *outit=dspnew(nact, nact, nact*4);
 	double *px=outit->x;
 	spint *pp=outit->p;

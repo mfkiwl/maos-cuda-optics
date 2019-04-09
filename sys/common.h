@@ -21,8 +21,8 @@
    Every source file in this folder should include this file
 */
 
-#ifndef AOS_COMMON_H
-#define AOS_COMMON_H
+#ifndef AOS_SYS_COMMON_H
+#define AOS_SYS_COMMON_H 1
 //C standard headers
 #include <unistd.h>
 #include <time.h>
@@ -47,11 +47,13 @@ void default_quitfun(const char *msg);
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <complex>
 #include <cmath>
 using std::signbit;
 using std::isfinite;
 //using std::isnan;
 using std::strerror;
+using std::pow;
 #else//C99 mode or CUDA.
 #include <signal.h>
 #include <stdarg.h>

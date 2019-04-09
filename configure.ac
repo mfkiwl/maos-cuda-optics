@@ -16,7 +16,7 @@ case "$CXXFLAGS" in
     *-std=*)
     ;;
     *)
-	CXXFLAGS+="-std=c++11"
+	CXXFLAGS+=" -std=c++11"
 	;;
 esac
 if test -z "$LIBS" ;then
@@ -28,11 +28,12 @@ AC_CONFIG_HEADER([config.h])
 #defines host host_os host_cpu host_vendor etc
 AC_CANONICAL_HOST
 AC_LANG([C++])
-AC_TYPE_SIZE_T #it sets CC if empty
+#AC_TYPE_SIZE_T #it sets CC if empty
 AC_PROG_CXX([$CXX])
 #AM_PROG_CXX_C_O
 #AX_CXX_COMPILE_STDCXX_11  #enable C++11 AX needs autoconf archive.
 AC_OPENMP
+OPENMP_FLAGS="${OPENMP_CXXFLAGS:-$OPENMP_CFLAGS}"
 #The following must be after AC_PROG_CC
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
@@ -152,7 +153,7 @@ AC_ARG_WITH(gtk,  AS_HELP_STRING([--with-gtk[=DIR]],[Enable gtk support]), [GTKD
 AC_ARG_ENABLE(gtk-3, AS_HELP_STRING([--enable-gtk-3],[Using GTK+-3]), [use_gtk_3="$enableval"], [use_gtk_3="default"])
 AC_ARG_WITH(matlab, AS_HELP_STRING([--with-matlab[=DIR]],[Enable compiling mex routines for matlab]), [MEXDIR=${withval}], [MEXDIR=${MEXDIR_AUTO}])
 AC_ARG_ENABLE(release, AS_HELP_STRING([--enable-release], [Compile for broad compatibility]), [use_release="$enableval"],[use_release="no"])
-
+AC_ARG_ENABLE(thread, AS_HELP_STRING([--disable-thread], [Disable openmp or pthread support]), [use_thread="$enableval"], [use_thread="yes"])
 if test -z "$MEXDIR" -o "$MEXDIR" = "no" ;then
     with_matlab=no
 else
@@ -168,18 +169,23 @@ fi
 #-all-static will produce a static exe if all libraries are available in static linking mode.
 OPTScommon=
 if test "${USER}" = "lianqiw" ;then
-    OPTScommon+=" -Wshadow -Wall -Wextra -Werror -Wno-unknown-pragmas -Wno-unused-function -fno-common -Wno-missing-field-initializers -Wno-format-security -Wno-vla " 
+    OPTScommon+=" -Wshadow -Wall -Wextra -Werror -Wno-unknown-pragmas "
+    OPTScommon+=" -Wno-unused-function -fno-common -Wno-missing-field-initializers -Wno-vla " 
+    OPTScommon+=" -Wno-format-security"
 fi
 LDEXE=
 OPTS=
 #Set optimize flags for different compilers
 #-xO Enables SSE3, SSE2 and SSE instruction sets optimizations for non-Intel CPUs 
-COMMON_ICC="-wd193 -wd1418 -wd2259 -wd1372 -wd981 -wd1292 -wd10237 -wd858 -wd1478 -wd1786 -wd3180 -diag-disable remark -vec-report=3"
-COMMON_GCC=" -Wno-deprecated-declarations -fms-extensions -static-libgcc"
+COMMON_ICC="-wd1478 " #unknown paragmas
+#COMMON_ICC+=" -wd193 -wd1418 -wd2259 -wd1372 -wd981 -wd1292 -wd10237 -wd858 -wd1786 -wd3180 "
+#COMMON_ICC+=" -wd308 -wd373" #complex number
+COMMON_ICC+=" -diag-disable remark -qopt-report=3"
+COMMON_GCC="-Wno-deprecated-declarations -fms-extensions -static-libgcc"
 COMMON_CLANG="-Wno-deprecated-declarations -Qunused-arguments "
 COMMON_ALL=""
 
-OPTIM_ALL="-O3 "
+OPTIM_ALL="-O3"
 DEBUG_ALL=" -g -O0 -DDEBUG_TRACE"
 
 DEBUG_GCC="-ggdb -fno-omit-frame-pointer -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls"
@@ -201,7 +207,7 @@ case "$CN" in
 	    minor=${minor%%.*}
 	    if test $major -lt 11 ;then
 		AC_MSG_ERROR([OpenMP is not supported by ICC $CXX_VER])
-		unset OPENMP_CFLAGS
+		unset OPENMP_FLAGS
 	    fi
 	fi
 	;;
@@ -238,7 +244,7 @@ case "$CN" in
 	    #GCC introduced openmp task in 4.4
 	    if test $major -le 4 -a $minor -le 4 ;then
 		AC_MSG_ERROR([OpenMP is not supported by GCC $CXX_VER])
-		unset OPENMP_CFLAGS
+		unset OPENMP_FLAGS
 	    fi
 	fi
 	;;
@@ -269,14 +275,20 @@ echo OPTScc="${optname1} ${optname2} ${optname3} ${optname4}"
 OPTScc="${!optname1} ${!optname2} ${!optname3} ${!optname4}"
 echo OPTScc=$OPTScc
 unset optname1 optname2 optname3 optname4
-
-if test -z "$OPENMP_CFLAGS" ;then
-    OPTScc+=" -pthread" #enables pthreads feature and links in the library
-    AC_DEFINE(HAS_OPENMP,[0],["Openmp is disabled"])
+if test "$use_thread" = "yes"; then
+    AC_DEFINE(HAS_THREAD, [1], ["Threading"])
 else
-    OPTScc+=" $OPENMP_CFLAGS"
-    AC_DEFINE(HAS_OPENMP,[1],["Openmp is enabled"])
+    AC_DEFINE(HAS_THREAD, [0], ["Threading"])
+    unset OPENMP_FLAGS
 fi
+if test -z "$OPENMP_FLAGS" ;then
+    OPTScc+=" -pthread" #enables pthreads feature and links in the library
+    AC_DEFINE(HAS_OPENMP,[0],["Openmp"])
+else
+    OPTScc+=" $OPENMP_FLAGS"
+    AC_DEFINE(HAS_OPENMP,[1],["Openmp"])
+fi
+
 OPTSextra=""
 
 #Used for embedding conf folder in maos exe
@@ -297,7 +309,8 @@ case "$host_os" in
 	LDEXE+=" -lrt" #need real time library.
 	LDOPTS+=" -Wl,--no-as-needed" #as-needed is default in some system (ubuntu) and cause mkl library checking to fail
 	CXXFLAGS+=" -fPIC"
-	CXXFLAGS_EXTRA="-g -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200112L"
+	CXXFLAGS_EXTRA="-g -D_XOPEN_SOURCE=500 -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L" #200809L fixes uselocale undefined error
+	#-D_BSD_SOURCE 
 	if test "$use_release" = "yes" ;then
 	    CXXFLAGS+=" -D_GLIBC_2_5_SOURCE"
 	fi
@@ -492,7 +505,7 @@ function set_lapack(){
 		LAPACK+=" -lmkl_intel"
 	    fi
 	    LAPACK+=" -lmkl_core"
-	    if false; then
+	    if test $use_thread != "yes"; then
 		LAPACK+=" -lmkl_sequential -lpthread"
 	    else
 		if test "$CN" = "GCC" ;then
@@ -597,7 +610,7 @@ else
     AC_CHECK_HEADERS([fftw3.h],[], [has_fftw='no'])
     if test "$has_fftw" = "no" ;then #fftw does not exist in system.
 	FLAGS="--enable-threads --enable-shared --enable-static"
-	if test -n "$OPENMP_CFLAGS" ;then
+	if test -n "$OPENMP_FLAGS" ;then
             FLAGS+=" --enable-openmp"
 	fi
 	compile FFTW fftw.tar.bz2 $FLAGS
@@ -746,13 +759,14 @@ if test "$with_matlab" != "no" ;then
    	mexglx)
 	    MEXLIB=glnx86
 	    MEXOPT="$OPTS -fPIC -m32 -fexceptions -D_FILE_OFFSET_BITS=64"
-	    MEXOPT="${MEXOPT} -D_BSD_SOURCE -D_POSIX_C_SOURCE=200112L"
+	    #MEXOPT="${MEXOPT} -D_BSD_SOURCE -D_POSIX_C_SOURCE=200112L"
 	    mex_cpu=x86
 	    ;;
    	mexa64)
 	    MEXLIB=glnxa64
 	    MEXOPT="$OPTS -fPIC -m64 -fexceptions -fno-omit-frame-pointer"
-	    MEXOPT="${MEXOPT} -DDLONG -D_BSD_SOURCE -D_POSIX_C_SOURCE=200112L"
+	    #MEXOPT="${MEXOPT} -DDLONG"
+	    #MEXOPT="${MEXOPT} -D_BSD_SOURCE -D_POSIX_C_SOURCE=200112L"
 	    mex_cpu=x86_64
 	    ;;
 	mexmaci)
@@ -763,7 +777,7 @@ if test "$with_matlab" != "no" ;then
 	mexmaci64)
 	    MEXLIB=maci64
 	    MEXOPT="$OPTS -fPIC -m64 -fexceptions" 
-	    MEXOPT="${MEXOPT} -DDLONG"
+	    #MEXOPT="${MEXOPT} -DDLONG"
 	    mex_cpu=x86_64
 	    ;;
 	mexw64)
@@ -790,7 +804,7 @@ if test "$with_matlab" != "no" ;then
 	AC_CHECK_LIB([mx], [mxGetPr], [mex_lib="yes"], [mex_lib="no"], [$LDMEX])
     fi
     if test x$mex_lib = xyes ;then
-    	MEXOPT="${MEXOPT} -I${MEXDIR}/../extern/include -DMATLAB_MEX_FILE $OPENMP_CFLAGS" 
+    	MEXOPT="${MEXOPT} -I${MEXDIR}/../extern/include -DMATLAB_MEX_FILE $OPENMP_FLAGS" 
 	LIBMEX=" -lmwlapack -lmwblas -lmx -lmex -lmat -lut -lstdc++ -lz -lm -ldl -lfftw3"
 	#some MATLAB distribution has libmwfftw3.so, some only has libmwfftw3.so.3
 	#AC_CHECK_LIB([mwfftw3], [fftw_execute], [LIBMEX+=" -lmwfftw3"], [LIBMEX+=" -l:libmwfftw3.so.3"], [$LDMEX])
@@ -929,8 +943,8 @@ if test "$with_cuda" != "no" ;then
     fi
     optname=${ccprefix}_${CCN}
     CCBINOPT+=" ${!optname}"
-    if test -n "$OPENMP_CFLAGS";then
-        CCBINOPT+=" $OPENMP_CFLAGS"
+    if test -n "$OPENMP_FLAGS";then
+        CCBINOPT+=" $OPENMP_FLAGS"
     fi
 else
     cudaver="no"

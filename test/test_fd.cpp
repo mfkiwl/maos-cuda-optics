@@ -232,7 +232,7 @@ static csp *fdpcg_prop(long nps, const long *os, long nxg, double dx,
 		    {
 			dcomplex shiftx=cexp(cf*(fx*dx));
 			dcomplex shifty=cexp(cf*(fy*dx));
-			px[count]=conj(shift*(1+0.25*
+			px[count]=conj(shift*(1.+0.25*
 					      (shiftx*shifty
 					       +conj(shiftx)*shifty
 					       +shiftx*conj(shifty)

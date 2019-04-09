@@ -167,13 +167,13 @@ static void servo_calc_init(SERVO_CALC_T *st, const dmat *psdin, double dt, long
     for(long i=0; i<nu->nx; i++){
 	dcomplex s=st->s->p[i]=pi2i*nu->p[i];
 	dcomplex zInv=cexp(-s*Ts);
-	dcomplex Hint=st->Hint->p[i]=1./(1-zInv);
+	dcomplex Hint=st->Hint->p[i]=1./(1.-zInv);
 	dcomplex Hwfs, Hdac;
 	if(dtrat==1){//we have a pure delay
 	    Hwfs=st->Hwfs->p[i]=zInv; 
 	    Hdac=1;
 	}else{
-	    Hwfs=st->Hwfs->p[i]=(1-zInv)/(Ts*s);
+	    Hwfs=st->Hwfs->p[i]=(1.-zInv)/(Ts*s);
 	    Hdac=Hwfs;
 	}
 	dcomplex Hlag=cexp(-s*dt);/*lag due to readout/computation*/
@@ -256,7 +256,7 @@ static double servo_calc_do(SERVO_CALC_T *st, double g0){
 	double a=st->a;
 	double T=st->T;
 	for(int i=0; i<nu->nx; i++){
-	    dcomplex Hlead=(1+T*st->s->p[i])/(1+a*T*st->s->p[i])*g2;
+	    dcomplex Hlead=(1.+T*st->s->p[i])/(1.+a*T*st->s->p[i])*g2;
 	    st->Hol->p[i]*=Hlead;
 	}
     }

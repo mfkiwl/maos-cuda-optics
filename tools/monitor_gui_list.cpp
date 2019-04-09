@@ -27,9 +27,6 @@
 */
 #define NOTIFY_IS_SUPPORTED 1
 
-
-
-#include <tgmath.h>
 #include <netdb.h>
 #include <netdb.h>
 #include <fcntl.h> 
@@ -44,6 +41,7 @@
 #include <gdk/gdk.h>
 #include <glib/gprintf.h>
 #include "monitor.h"
+#define fabs std::abs
 /*DO not modify enum without modify list store*/
 enum{
     COL_DATE=0,

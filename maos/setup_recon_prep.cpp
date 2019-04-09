@@ -263,7 +263,18 @@ setup_recon_xloc(RECON_T *recon, const PARMS_T *parms){
 	writebin(recon->xmap, "xmap");
     }
 }
+long count_nonzero(const lmat *in){
+    long count=0;
+    if(in){
+	for(long i=0; i<in->nx*in->ny; i++){
+	    if(in->p[i]){
+		count++;
+	    }
 
+	}
+    }
+    return count;
+}
 /**
    Setup the deformable mirrors grid aloc. This is used for DM fitting.
 */
@@ -398,7 +409,13 @@ setup_recon_aloc(RECON_T *recon, const PARMS_T *parms){
 	    recon->actfloat->p[idm]=loc_coord2ind(recon->aloc->p[idm], parms->dm[idm].actfloat);
 	}
     }
- 
+    if(anystuck || anyfloat){
+	for(int idm=0; idm<ndm; idm++){
+	    int nstuck=recon->actstuck?count_nonzero(recon->actstuck->p[idm]):0;
+	    int nfloat=recon->actfloat?count_nonzero(recon->actfloat->p[idm]):0;
+	    info("DM %d has %d stuck and %d floating actuators\n", idm, nstuck, nfloat);
+	}
+    }
     if(parms->save.setup){
 	writebin(recon->aloc,"aloc");
 	writebin(recon->amap, "amap");

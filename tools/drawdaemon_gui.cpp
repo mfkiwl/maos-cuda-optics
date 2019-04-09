@@ -15,11 +15,11 @@
   You should have received a copy of the GNU General Public License along with
   MAOS.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <tgmath.h>
 #include <gdk/gdkkeysyms.h>
 #include "drawdaemon.h"
 #include "mouse_hand.h"
 #include "mouse_white.h"
+#define fabs std::abs
 
 #ifndef GTK_WIDGET_HAS_FOCUS
 #define GTK_WIDGET_HAS_FOCUS gtk_widget_has_focus

@@ -12,7 +12,7 @@ PROGS=
 if USE_SCHEDULER
 PROGS+=../bin/scheduler
 ___bin_scheduler_SOURCES=scheduler.cpp
-___bin_scheduler_LDADD=../sys/libaosys.la $(LDOPTS)
+___bin_scheduler_LDADD=../sys/libaosys.la $(LDOPTS) -lpthread
 if HAS_LWS
 ___bin_scheduler_SOURCES+=scheduler_ws.cpp
 ___bin_scheduler_LDADD+=-lwebsockets

@@ -103,11 +103,11 @@ run_maos "NGS MCAO (inte): " -cmcao_ngs.conf recon.split=0
 
 run_maos "NGS MCAO (split):" -cmcao_ngs.conf recon.split=1
 
-run_maos "SCAO LGS (inte): " -cscao_lgs.conf recon.split=0
+run_maos "SCAO LGS (inte): " -cscao_lgs.conf recon.split=0 powfs.dsa=[0.5 -1] 
 
 run_maos "SCAO LGS (split):" -cscao_lgs.conf recon.split=1
 
-run_maos "LGS LTAO (inte): " dm_single.conf fov_oa.conf recon.split=0
+run_maos "LGS LTAO (inte): " dm_single.conf fov_oa.conf recon.split=0 
 
 run_maos "LGS LTAO (split):" dm_single.conf fov_oa.conf recon.split=1
 

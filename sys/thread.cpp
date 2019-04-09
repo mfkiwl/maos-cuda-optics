@@ -15,8 +15,8 @@
   You should have received a copy of the GNU General Public License along with
   MAOS.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include "thread.h"
-#include "common.h"
 /**
    Functions regarding to threading
 */
@@ -40,6 +40,7 @@ int thread_new(thread_fun fun, void* arg){
     }
     return ans;
 }
+
 /**
    Break out the job to be executed by multiple threads. 
 */
@@ -76,7 +77,6 @@ void thread_prep(thread_t *info, long start, long end, long nthread,
 	error("Not correctly terminated\n");
     }
 }
-
 /**
    After calling this routine, this thread will nolonger receive signals
  */
@@ -85,6 +85,7 @@ void thread_block_signal(){
     sigfillset(&set);
     pthread_sigmask(SIG_BLOCK, &set, NULL);
 }
+
 #if _OPENMP
 long thread_id(){
     return (long)omp_get_thread_num();

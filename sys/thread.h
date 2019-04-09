@@ -28,36 +28,13 @@
 */
 
 #include "common.h"
-#define DO_PRAGMA(A...) _Pragma(#A)
-
-#if HAS_OPENMP && !defined(_OPENMP)
+#if HAS_OPENMP && !defined(_OPENMP) 
 #define _OPENMP 200805 //Sometimes GPU code does not define this
 #endif
-
-#ifdef _OPENMP
-#include <omp.h>
+#if _OPENMP < 200805 || ! HAS_THREAD//minimum OpenMP version required.
+#undef _OPENMP
 #endif
 
-#if _OPENMP >= 200805
-#define OMPTASK_SINGLE				\
-    DO_PRAGMA(omp parallel)			\
-    DO_PRAGMA(omp single)			
-#else
-#define OMPTASK_SINGLE
-#endif
-#if _OPENMP >= 200805
-#define OMP_IN_PARALLEL omp_in_parallel()
-#else
-#define OMP_IN_PARALLEL 0
-#endif
-
-#if _OPENMP >= 201307
-#define OMP_TASKSYNC_START DO_PRAGMA(omp taskgroup)
-#define OMP_TASKSYNC_END
-#elif _OPENMP >= 200805
-#define OMP_TASKSYNC_START
-#define OMP_TASKSYNC_END DO_PRAGMA(omp taskwait)
-#endif
 /**
    Information about job to launch for each thread. start and end are the two indices.
 */
@@ -84,9 +61,38 @@ long thread_id(void);
   QUEUE_THREAD(group, A, nthread, urgent) will queue arrays of thread_t (A) 
   CALL_THREAD(A, urgent) calls QUEUE_THREAD and waits for all to finish.
 */
-#include <pthread.h>
-#include "thread_pool.h"
+
+
+#if _OPENMP >= 200805 
+#include <omp.h>
+#define DO_PRAGMA(A...) _Pragma(#A)
+#else
+#define DO_PRAGMA(A...)
+#endif
+
 #if _OPENMP >= 200805
+#define OMPTASK_SINGLE				\
+    DO_PRAGMA(omp parallel)			\
+    DO_PRAGMA(omp single)			
+#else
+#define OMPTASK_SINGLE
+#endif
+
+#if _OPENMP >= 200805
+#define OMP_IN_PARALLEL omp_in_parallel()
+#else
+#define OMP_IN_PARALLEL 0
+#endif
+
+#if _OPENMP >= 201307
+#define OMP_TASKSYNC_START DO_PRAGMA(omp taskgroup)
+#define OMP_TASKSYNC_END
+#else
+#define OMP_TASKSYNC_START
+#define OMP_TASKSYNC_END DO_PRAGMA(omp taskwait)
+#endif
+
+#if _OPENMP >= 200805 || ! HAS_THREAD
 /**
    Notice it is not effective to set the environment variables here.
 */
@@ -97,9 +103,11 @@ long thread_id(void);
 #define OMP_TASK(urgent) DO_PRAGMA(omp task)
 #endif
 static inline void THREAD_POOL_INIT(int nthread){
+#if _OPENMP >= 200805
     info("Using OpenMP version %d with %d threads\n", _OPENMP, nthread);
     omp_set_num_threads(nthread);
     omp_set_nested(0);//make sure nested is not enabled
+#endif
 }
 static inline void QUEUE(long *group, thread_fun fun, void *arg, int nthread, int urgent){
     (void) group;
@@ -116,16 +124,6 @@ static inline void CALL(thread_fun fun, void *arg, int nthread, int urgent){
     OMP_TASKSYNC_END
 }
 
-/*The following QUEUE, CALL, WAIT acts on function (fun) and argument (arg).*/
-/*Don't turn the following into static inline function becase task will be waited*/
-/*
-#define QUEUE(group,fun,arg,nthread,urgent)	\
-    (void) group; (void) urgent;		\
-    for(int it=0; it<nthread; it++){		\
-	OMP_TASK(urgent)			\
-	    fun(arg);				\
-    }
-*/
 #define WAIT(group) DO_PRAGMA(omp taskwait)
 
 /*Turn to static inline function because nvcc concatenates _Pragma to } */
@@ -157,7 +155,8 @@ static inline void CALL_THREAD(thread_t *A, int urgent){
 }
 
 #else //using our thread_pool
-
+#include <pthread.h>
+#include "thread_pool.h"
 
 /**
    Queue jobs to group. Do not wait
@@ -193,7 +192,7 @@ static inline void  CALL_THREAD(thread_t *A, int urgent){
 
 #define THREAD_POOL_INIT(A) ({thread_pool_init(A);info("Using thread pool with %d threads\n", A);})
 #define THREAD_YIELD thread_pool_do_job_once()
-#endif
+#endif //if HAS_THREAD
 
 #define LOCK(A) pthread_mutex_lock(&A)
 #define TRYLOCK(A) pthread_mutex_trylock(&A)

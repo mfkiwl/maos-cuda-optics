@@ -70,8 +70,8 @@ static inline int wrap(long index, long n){
 //When including by CUDA, all definitions are already available.
 #ifndef AOS_CUDA_GPU_H
 //C++ mode
-#include <complex>
-#include <cmath>
+//#include <complex>
+//#include <cmath>
 using std::real;
 using std::conj;
 //using std::isinf;
@@ -82,6 +82,7 @@ typedef complex<float> fcomplex;
 #define COMPLEX(A,B) dcomplex(A,B)
 #define DCOMPLEX(A,B) dcomplex(A,B)
 #define FCOMPLEX(A,B) fcomplex(A,B)
+
 #define fabs std::abs
 #define cabs fabs
 #define cimag imag

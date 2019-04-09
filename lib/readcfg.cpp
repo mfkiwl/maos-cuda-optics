@@ -718,10 +718,15 @@ void readcfg_strarr_n(char ***ret, int len, const char *format,...){
 void readcfg_strarr_nmax(char ***ret, int len, const char *format,...){
     format2key;
     int len2=readstr_strarr((char***)ret, len, getrecord(key, 1)->data);
-    if(len2==1){
-	for(int i=1; i<len; i++){
-	    (*ret)[i]=(*ret)[0]?strdup((*ret)[0]):NULL;
+    if(len2==1 && len>len2){
+	if(!(*ret)[0]){//allow relax read of empty str
+	    memset(*ret, 0, sizeof(char*)*len);
+	}else{
+	    error("%s: Require %d elements, but got %d valid string.\n", key, len, len2);
 	}
+    	/*for(int i=1; i<len; i++){
+	    (*ret)[i]=(*ret)[0]?strdup((*ret)[0]):NULL;
+	    }*/
     }else if(len2!=0 && len2!=len){
 	error("%s: Require %d elements, but got %d\n", key, len, len2);
     }

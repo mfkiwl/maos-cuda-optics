@@ -15,8 +15,8 @@
   You should have received a copy of the GNU General Public License along with
   MAOS.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <tgmath.h>
 #include "drawdaemon.h"
+#define fabs std::abs
 /*
   Routines in this file handles I/O.
 
@@ -76,7 +76,7 @@ void dbl2pix(long nx, long ny, int color, const double *restrict p,  void *pout,
 		pi[i]=0;
 	    }else{
 		double x=(p[i]-min)*scale+offset;
-		pi[i]=255<<24 | crp(x,0.75)<<16 | crp(x, 0.5)<<8 | crp(x, 0.25);
+		pi[i]=(unsigned int)255<<24 | crp(x,0.75)<<16 | crp(x, 0.5)<<8 | crp(x, 0.25);
 	    }
 	}
     }else{/*b/w */

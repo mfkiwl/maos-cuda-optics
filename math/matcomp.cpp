@@ -112,7 +112,6 @@ void X(embed_wvf)(X(mat) *restrict A, const R *opd, const R *amp,
 	/*
 	  The original method of adding in to out is not right.
 	*/
-	auto psfs=(T(*)[npsfx])psf;
 	auto amps=(R(*)[nopdx])amp;
 	auto opds=(R(*)[nopdx])opd;
 	const R ctheta=cos(theta);
@@ -143,7 +142,7 @@ void X(embed_wvf)(X(mat) *restrict A, const R *opd, const R *amp,
 			+amps[iy2][ix2+1]*(x2*(1.-y2))
 			+amps[iy2+1][ix2]*((1-x2)*y2)
 			+amps[iy2+1][ix2+1]*(x2*y2);
-		    psfs[iy][ix]=iamp*EXPI(wvk*iopd);
+		    psf[ix+iy*npsfx]=iamp*EXPI(wvk*iopd);
 		}
 	    }
 	}
@@ -606,51 +605,53 @@ void X(tilt2)(X(mat) *otf, X(mat) *otfin, R sx, R sy, int pinct){
     int ny=otf->ny;
     R dux=1./(R)nx;
     R duy=1./(R)ny;
-    T ux[nx];
-    T uy[ny];
+    X(mat)*ux=X(new)(nx,1);
+    X(mat)*uy=X(new)(ny,1);
     T cx=EXPI(-2*M_PI*dux*sx);
     T cy=EXPI(-2*M_PI*duy*sy);
     //warning_once("Consider caching ux, uy\n");
     if(pinct==1){/*peak in center */
-	ux[0]=EXPI(-2*M_PI*dux*sx*(-nx/2));
+	ux->p[0]=EXPI(-2*M_PI*dux*sx*(-nx/2));
 	for(int i=1; i<nx; i++){
-	    ux[i]=ux[i-1]*cx;
+	    ux->p[i]=ux->p[i-1]*cx;
 	}
-	uy[0]=EXPI(-2*M_PI*duy*sy*(-ny/2));
+	uy->p[0]=EXPI(-2*M_PI*duy*sy*(-ny/2));
 	for(int i=1; i<ny; i++){
-	    uy[i]=uy[i-1]*cy;
+	    uy->p[i]=uy->p[i-1]*cy;
 	}
     }else{
-	ux[0]=1;
+	ux->p[0]=1;
 	for(int i=1; i<nx/2; i++){
-	    ux[i]=ux[i-1]*cx;
+	    ux->p[i]=ux->p[i-1]*cx;
 	}
-	ux[nx/2]=EXPI(-2*M_PI*dux*sx*(-nx/2));
+	ux->p[nx/2]=EXPI(-2*M_PI*dux*sx*(-nx/2));
 	for(int i=nx/2+1; i<nx; i++){
-	    ux[i]=ux[i-1]*cx;
+	    ux->p[i]=ux->p[i-1]*cx;
 	}
-	uy[0]=1;
+	uy->p[0]=1;
 	for(int i=1; i<ny/2; i++){
-	    uy[i]=uy[i-1]*cy;
+	    uy->p[i]=uy->p[i-1]*cy;
 	}
-	uy[ny/2]=EXPI(-2*M_PI*duy*sy*(-ny/2));
+	uy->p[ny/2]=EXPI(-2*M_PI*duy*sy*(-ny/2));
 	for(int i=ny/2+1; i<ny; i++){
-	    uy[i]=uy[i-1]*cy;
+	    uy->p[i]=uy->p[i-1]*cy;
 	}
     }
     if(otf->p==otfin->p){
 	for(int iy=0; iy<ny; iy++){
 	    for(int ix=0; ix<nx; ix++){
-		P(otf,ix,iy)*=ux[ix]*uy[iy];
+		P(otf,ix,iy)*=ux->p[ix]*uy->p[iy];
 	    }
 	}
     }else{
 	for(int iy=0; iy<ny; iy++){
 	    for(int ix=0; ix<nx; ix++){
-		P(otf,ix,iy)=P(otfin,ix,iy)*ux[ix]*uy[iy];
+		P(otf,ix,iy)=P(otfin,ix,iy)*ux->p[ix]*uy->p[iy];
 	    }
 	}
     }
+    X(free)(ux);
+    X(free)(uy);
 }
 /**
    Inplace tilt the otf to make the image shift. 
