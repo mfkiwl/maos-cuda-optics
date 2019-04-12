@@ -178,7 +178,7 @@ void cp2gpu(curmat &dest, const loc_t *src){
 */
 void cp2gpu(curcell &dest, const dcell *src){
     if(!src) {
-	dest.zero();
+	Zero(dest);
 	return;
     }
     if(!dest) {
@@ -208,7 +208,7 @@ void cp2gpu(curcell &dest, const dcell *src){
 */
 void cp2gpu(cuccell &dest, const ccell *src){
     if(!src) {
-	dest.zero();
+	Zero(dest);
 	return;
     }
     if(!dest) {
@@ -380,7 +380,7 @@ void cp2cpu(zmat **out, const cucmat &in, cudaStream_t stream){
 }
 #endif
 #define cp2cpu_cell(S, T)						\
-    void cp2cpu(S##cell **out, const Cell<T, Gpu> &in, cudaStream_t stream){ \
+    void cp2cpu(S##cell **out, const CuCell<T> &in, cudaStream_t stream){ \
 	if(!in){							\
 	    if(*out) S##cellzero(*out);					\
 	    return;							\

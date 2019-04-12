@@ -59,7 +59,7 @@ static inline void cuwrite(const Array<T, Gpu> &A, const char *format, ...)CHECK
 }
 
 template <typename T>
-static inline void cuwrite(const Cell<T, Gpu> &A, const char *format, ...)CHECK_ARG(2){
+static inline void cuwrite(const CuCell<T> &A, const char *format, ...)CHECK_ARG(2){
     format2fn;
     file_t *fp=zfopen(fn, "wb");
     header_t header={MCC_ANY, A?(uint64_t)A.Nx():0, A?(uint64_t)A.Ny():0, NULL};
@@ -73,9 +73,9 @@ static inline void cuwrite(const Cell<T, Gpu> &A, const char *format, ...)CHECK_
 }
 
 template <typename T>
-static inline void cucellcp(Cell<T, Gpu> &out, const Cell<T, Gpu>&in, cudaStream_t stream){
+static inline void cucellcp(CuCell<T> &out, const CuCell<T>&in, cudaStream_t stream){
     if(!out){
-	out=in.New();
+	out=New(in);
     }
     if(!in.M()){
 	for(int i=0; i<in.Nx()*in.Ny(); i++){

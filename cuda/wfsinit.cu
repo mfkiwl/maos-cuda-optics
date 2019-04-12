@@ -117,8 +117,8 @@ void gpu_wfsgrad_update_mtche(const PARMS_T *parms, const POWFS_T *powfs){
 		    dcellfree(mtchec);
 		    if(iwfs!=iwfs0 && cuwfs[iwfs].mtche()==cuwfs[iwfs0].mtche()){
 			//Delete old values.
-			cuwfs[iwfs].mtche=0;
-			cuwfs[iwfs].i0sum=0;
+			cuwfs[iwfs].mtche.init();
+			cuwfs[iwfs].i0sum.init();
 		    }
 		    cp2gpu(cuwfs[iwfs].mtche, mtche);
 		    dfree(mtche);
@@ -461,8 +461,8 @@ void gpu_wfs_init_sim(const PARMS_T *parms, POWFS_T *powfs){
 	int ipowfs=parms->wfs[iwfs].powfs;
 	int nsa=powfs[ipowfs].saloc->nloc;
 	//gradacc is used for accumulation in geom mode and for output in phy mode
-	initzero(cuwfs[iwfs].gradacc, nsa*2, 1);
-	initzero(cuwfs[iwfs].gradcalc,nsa*2, 1);
+	cuwfs[iwfs].gradacc.init(nsa*2, 1);
+	cuwfs[iwfs].gradcalc.init(nsa*2, 1);
 	if(parms->powfs[ipowfs].usephy || parms->powfs[ipowfs].dither){
 	    if(!cuwfs[iwfs].ints){
 		if(parms->powfs[ipowfs].type==1){//PYWFS
@@ -471,7 +471,7 @@ void gpu_wfs_init_sim(const PARMS_T *parms, POWFS_T *powfs){
 		    cuwfs[iwfs].ints=curcell(nsa,1,powfs[ipowfs].pixpsax,powfs[ipowfs].pixpsay);
 		}
 	    }else{
-		cuzero(cuwfs[iwfs].ints);
+		Zero(cuwfs[iwfs].ints);
 	    }
 	}
 	if(parms->powfs[ipowfs].pistatout){
@@ -484,11 +484,11 @@ void gpu_wfs_init_sim(const PARMS_T *parms, POWFS_T *powfs){
 		const int npsf=MAX(notfx,notfy);
 		cuwfs[iwfs].pistatout=curcell(nsa, parms->powfs[ipowfs].nwvl, npsf, npsf);
 	    }else{
-		cuzero(cuwfs[iwfs].pistatout);
+		Zero(cuwfs[iwfs].pistatout);
 	    }
 	}
 	if(parms->powfs[ipowfs].i0save){
-	    cuzero(cuwfs[iwfs].intsout);
+	    Zero(cuwfs[iwfs].intsout);
 	}
 	CUDA_SYNC_DEVICE;
     }

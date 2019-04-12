@@ -126,12 +126,12 @@ static void mvm_direct_igpu(thread_t *info){
 	}
 	RECORD(1);
 	if(mvmi){
-	    opdr.replace(mvmi()+(ig-info->start)*ntotxloc, stream);
+	    opdr.Replace(mvmi()+(ig-info->start)*ntotxloc, stream);
 	}
 	curecon->RR->R(tomo_rhs, 0, grad, 1, stream);
 	residual->p[ig]=curecon->RL->solve(opdr, tomo_rhs, stream);
 	RECORD(2);
-	fitr.replace(mvm()+(ig-info->start)*ntotact, stream);
+	fitr.Replace(mvm()+(ig-info->start)*ntotact, stream);
 	curecon->FR->R(fit_rhs, 0, opdr, 1, stream);
 	residualfit->p[ig]=curecon->FL->solve(fitr, fit_rhs, stream);
 	RECORD(3);

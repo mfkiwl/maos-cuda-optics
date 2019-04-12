@@ -119,11 +119,11 @@ static void mvm_trans_igpu(thread_t *info){
 	}
 	if(!recon->actcpl || recon->actcpl->p[curdm]->p[curact]>EPS){
 	    if(mvmf){
-		opdx.replace(mvmf()+(iact-info->start)*mvmf.Nx(), stream);
+		opdx.Replace(mvmf()+(iact-info->start)*mvmf.Nx(), stream);
 	    }
 	    if(!load_mvmf){
 		if(eyec){ /*Fitting operator*/
-		    cuzero(dmfit, stream);//temp
+		    Zero(dmfit, stream);//temp
 		    residualfit->p[iact]=curecon->FL->solve(dmfit, eyec, stream);
 #if MVM_DEBUG == 1
 		    cuwrite(dmfit, "mvm_dmfit_%d", iact);
@@ -141,9 +141,9 @@ static void mvm_trans_igpu(thread_t *info){
 	    }
 	    tk_fitR+=toc3; tic;
 	    if(mvmi){
-		opdr.replace(mvmi()+(iact-info->start)*mvmi.Nx(),  stream);
+		opdr.Replace(mvmi()+(iact-info->start)*mvmi.Nx(),  stream);
 	    }else{
-		cuzero(opdr.M(), stream);
+		Zero(opdr.M(), stream);
 	    }
 	    residual->p[iact]=curecon->RL->solve(opdr, opdx, stream);
 #if MVM_DEBUG == 1
@@ -151,7 +151,7 @@ static void mvm_trans_igpu(thread_t *info){
 #endif
 	    tk_TomoL+=toc3; tic;
 	    /*Right hand side. output directly to mvmt*/
-	    grad.replace(mvmt()+(iact-info->start)*ntotgrad, stream);
+	    grad.Replace(mvmt()+(iact-info->start)*ntotgrad, stream);
 	    curecon->RR->Rt(grad, 0, opdr, 1, stream);
 #if MVM_DEBUG == 1
 	    cuwrite(grad, "mvm_grad_%d", iact);
@@ -325,7 +325,7 @@ void gpu_setup_recon_mvm_trans(const PARMS_T *parms, RECON_T *recon){
 	    gpu_set(cuglobal->recongpu);
 	    tic;
 	    stream_t stream;
-	    curmat mvmtt=mvmt.trans(stream);
+	    curmat mvmtt=Transpose(mvmt, stream);
 	    stream.sync();
 	    toc2("MVM Reshape in GPU");tic;
 	    cp2cpu(&recon->MVM, mvmtt, stream);

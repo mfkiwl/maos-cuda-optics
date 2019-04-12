@@ -119,16 +119,16 @@ Real gpu_pcg(curcell &x0, cucg_t *Amul, cucgpre_t *Mmul,
     if(!cg_data.diff){ //Only this enables async transfer
 	cg_data.diff.init(maxiter+1,1);
     }
-    cg_data.diff.zero();
+    Zero(cg_data.diff);
     Real *diff=cg_data.diff;
 #if PRINT_RES == 2
     info("GPU %sCG %d:",  Mmul?"P":"", maxiter);
 #endif
     /*computes r0=b-A*x0 */
     if(!x0){
-	x0=b.New();
+	x0=New(b);
     }else if(!warm){
-	x0.zero(stream);
+	Zero(x0, stream);
     }
    
     int kover=0; //k overflows maxit
@@ -136,7 +136,7 @@ Real gpu_pcg(curcell &x0, cucg_t *Amul, cucgpre_t *Mmul,
 	if(k==maxiter){
 	    k=0;//reset 
 	    kover++;
-	    cg_data.diff.zero();
+	    Zero(cg_data.diff);
 	    DO(cudaMemsetAsync(rr0+1, 0, (ntot-1)*sizeof(Real),stream));
 	}
 	if(k%500==0){/*initial or re-start every 500 steps*/
@@ -147,7 +147,7 @@ Real gpu_pcg(curcell &x0, cucg_t *Amul, cucgpre_t *Mmul,
 	    (*Amul)(r0, 1.f, x0, -1.f, stream);/*r0=r0+(-1)*A*x0 */ 
 	    RECORD(3);
 	    if(Mmul){/*z0=M*r0*/
-		if(z0()==r0()) z0=0;
+		if(z0()==r0()) z0.init();
 		(*Mmul)(z0,r0,stream);
 	    }else{
 		z0=r0;

@@ -307,9 +307,9 @@ void dither_t::acc(DITHER_T *dither, curcell &ints, Real cs, Real ss, int npll, 
 	cp2cpu(&dither->imb, imb, stream);
 	cp2cpu(&dither->imx, imx, stream);
 	cp2cpu(&dither->imy, imy, stream);
-	cuzero(imb);
-	cuzero(imx);
-	cuzero(imy);
+	Zero(imb);
+	Zero(imx);
+	Zero(imy);
     }
 }
 /**
@@ -356,15 +356,15 @@ void gpu_wfsgrad_queue(thread_t *info){
 	curmat phiout=cuwfs[iwfs].phiout;
 	curmat gradacc=cuwfs[iwfs].gradacc;
 	curmat gradcalc=cuwfs[iwfs].gradcalc;
-	curmat gradref=0;
+	curmat gradref;
 	if(isim%dtrat==0){
-	    cuzero(cuwfs[iwfs].ints, stream);
-	    cuzero(cuwfs[iwfs].gradacc, stream);
+	    Zero(cuwfs[iwfs].ints, stream);
+	    Zero(cuwfs[iwfs].gradacc, stream);
 	}
 	if(cuwfs[iwfs].opdadd){ /*copy to phiout. */
 	    curcp(phiout, cuwfs[iwfs].opdadd, stream);
 	}else{
-	    cuzero(phiout, stream);
+	    Zero(phiout, stream);
 	}
 	if(simu->atm && ((!parms->sim.idealwfs && !parms->powfs[ipowfs].lo)
 			 || (!parms->sim.wfsalias && parms->powfs[ipowfs].lo))){
@@ -449,7 +449,7 @@ void gpu_wfsgrad_queue(thread_t *info){
 		double ratio;
 		if(do_pistatout && dtrat>1){
 		    gradref=gradcalc; 
-		    cuzero(gradcalc, stream);
+		    Zero(gradcalc, stream);
 		    ratio=1;
 		}else{
 		    gradref=gradacc;
@@ -520,7 +520,7 @@ void gpu_wfsgrad_queue(thread_t *info){
 		//cuwrite(gradcalc, "gradcalc"); exit(0);
 	    }else if(do_phy){
 		CUDA_CHECK_ERROR;
-		cuzero(gradcalc, stream);
+		Zero(gradcalc, stream);
 		curcell &ints=cuwfs[iwfs].ints;
 		const int totpix=powfs[ipowfs].pixpsax*powfs[ipowfs].pixpsay;
 		switch(parms->powfs[ipowfs].phytype_sim){

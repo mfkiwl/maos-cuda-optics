@@ -506,7 +506,7 @@ void mvmfull_real(int *gpus, int ngpu, int nstep){
 	    }
 	    cudaMemcpyAsync(dmres->p[igpu]->p, datai->act, nact*sizeof(Real), 
 			    cudaMemcpyDeviceToHost, datai->stream_a[0]);
-	    cuzero(datai->act, datai->stream_a[0]);
+	    Zero(datai->act, datai->stream_a[0]);
 	}
 	//CPU sums them together. sync first gpu
 	data[0]->stream_a[0].sync();

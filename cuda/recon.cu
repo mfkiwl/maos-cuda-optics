@@ -60,10 +60,6 @@ namespace cuda_recon{
 	}else{
 	    dmfit=curcell(parms->ndm, 1, recon->anloc->p, (long*)NULL);
 	}
-	dmfit_vec=curcell(parms->ndm, 1);
-	for(int idm=0; idm<parms->ndm; idm++){
-	    dmfit_vec[idm]=dmfit[idm].Vector();
-	}
     }
 
     if(parms->recon.alg==0 && (parms->gpu.tomo || parms->gpu.fit)
@@ -250,10 +246,10 @@ void curecon_t::update_cn2(const PARMS_T *parms, RECON_T *recon){
     }
 }
 void curecon_t::reset_runtime(){
-    opdr.zero(0);
-    dmfit.zero(0);
-    dm_wfs.zero(0);
-    dm_evl.zero(0);
+    Zero(opdr);
+    Zero(dmfit);
+    Zero(dm_wfs);
+    Zero(dm_evl);
 }
     
 #define DBG_RECON 0
@@ -265,7 +261,7 @@ Real curecon_t::tomo(dcell **_opdr, dcell **_gngsmvst,
     Real cgres=RL->solve(opdr, tomo_rhs, cgstream);
 
     if(_opdr){
-	cp2cpu(_opdr, opdr_vec, cgstream);
+	cp2cpu(_opdr, opdr, cgstream);
     }
     if(GXL){
 	dbg("computing ngsmvst\n");
@@ -277,22 +273,22 @@ Real curecon_t::tomo(dcell **_opdr, dcell **_gngsmvst,
 }
 Real curecon_t::fit(dcell **_dmfit, dcell *_opdr){
     if(_opdr){
-	cp2gpu(opdr_vec, _opdr);
+	cp2gpu(opdr, _opdr);
     }
 
     FR->R(fit_rhs, 0, opdr, 1, cgstream);
     Real cgres=FL->solve(dmfit, fit_rhs, cgstream);
 
-    add2cpu(_dmfit, 0, dmfit_vec, 1, cgstream);
+    add2cpu(_dmfit, 0, dmfit, 1, cgstream);
     cgstream.sync();
     return cgres;
 }
 Real curecon_t::moao_recon(dcell *_dmfit, dcell *_opdr){
     if(_dmfit){
-	cp2gpu(dmfit_vec, _dmfit);
+	cp2gpu(dmfit, _dmfit);
     }
     if(_opdr){
-	cp2gpu(opdr_vec, _opdr);
+	cp2gpu(opdr, _opdr);
     }
     for(int imoao=0; imoao<nmoao; imoao++){
 	if(!moao[imoao]) continue;
@@ -346,7 +342,7 @@ void curecon_t::moao_filter(dcell *_dm_wfs, dcell *_dm_evl){
 void curecon_t::mvm(dcell **_dmerr, dcell *_gradin){
     cp2gpu(gradin, _gradin);
     MVM->solve(dmfit, gradin, cgstream);
-    cp2cpu(_dmerr, dmfit_vec, cgstream);
+    cp2cpu(_dmerr, dmfit, cgstream);
     cgstream.sync();
 }
 
@@ -406,7 +402,7 @@ void curecon_t::tomo_test(SIM_T *simu){
 	    cuwrite(lp, "GPU_TomoP2");
 	}
     }
-    cuzero(lg, stream);
+    Zero(lg, stream);
     for(int i=0; i<5; i++){
 	RL->solve(lg, rhsg, stream);
 	cuwrite(lg, "GPU_TomoCG%d", i);
@@ -420,11 +416,11 @@ void curecon_t::fit_test(SIM_T *simu){	//Debugging.
     const RECON_T *recon=simu->recon;
     dcell *rhsc=NULL;
     dcell *lc=NULL;	
-    if(!simu->opdr && opdr_vec){
-	cp2cpu(&simu->opdr, opdr_vec, 0);
+    if(!simu->opdr && opdr){
+	cp2cpu(&simu->opdr, opdr, 0);
     }
     if(!simu->parms->gpu.tomo && simu->opdr){
-	cp2gpu(opdr_vec, simu->opdr);
+	cp2gpu(opdr, simu->opdr);
     }
     writebin(simu->opdr, "opdr");
     muv(&rhsc, &recon->fit->FR, simu->opdr, 1);
@@ -454,14 +450,14 @@ void curecon_t::fit_test(SIM_T *simu){	//Debugging.
 	FL2->L(lg, 1, rhsg, -1, stream);
 	cuwrite(lg, "GPU_FitL2");
     }
-    cuzero(lg, stream);
+    Zero(lg, stream);
     for(int i=0; i<5; i++){
 	FL->solve(lg, rhsg, stream);
 	cuwrite(lg, "GPU_FitSolve%d", i);
     }
     //Start from the same RHS.
     cp2gpu(rhsg, rhsc);
-    cuzero(lg, stream);
+    Zero(lg, stream);
     for(int i=0; i<5; i++){
 	FL->solve(lg, rhsg, stream);
 	cuwrite(lg, "GPU_FitSolveCPU%d", i);
@@ -547,7 +543,7 @@ void gpu_recon_reset(const PARMS_T *parms){//reset warm restart.
 	    for(int iwfs=0; iwfs<parms->nwfs; iwfs++){
 		gpu_set(cuglobal->wfsgpu[iwfs]);
 		if(cudata->dm_wfs[iwfs]){
-		    cuzero(cudata->dm_wfs[iwfs][0].p);
+		    Zero(cudata->dm_wfs[iwfs][0].p);
 		}
 	    }
 	}
@@ -555,7 +551,7 @@ void gpu_recon_reset(const PARMS_T *parms){//reset warm restart.
 	    for(int ievl=0; ievl<parms->evl.nevl; ievl++){
 		gpu_set(cuglobal->evlgpu[ievl]);
 		if(cudata->dm_evl[ievl]){
-		    cuzero(cudata->dm_evl[ievl][0].p);
+		    Zero(cudata->dm_evl[ievl][0].p);
 		}
 	    }
 	}

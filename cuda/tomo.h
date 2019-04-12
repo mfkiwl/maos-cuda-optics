@@ -60,8 +60,8 @@ class cutomo_grid:public cusolve_r, public cucg_t{
     curcell PTT;  /**< Global tip/tilt */
     curcell PDF;  /**< Differential focus removal */
     curcell PDFTT;/**<Coupling between DF and TT*/
-    Cell<int,Gpu> saptr;
-    Cell<short2,Gpu> GPp;
+    CuCell<int> saptr;
+    CuCell<short2> GPp;
     Real *GPscale;
     cuspcell GP;
     int ptt;       /**< piston/tip/tilt removal in L()*/

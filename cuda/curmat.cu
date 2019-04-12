@@ -29,7 +29,7 @@ void curset(curmat &A, Real alpha, cudaStream_t stream){
 
 void curcp(curmat &out, const curmat &in, cudaStream_t stream){
     if(!in){
-	cuzero(out, stream);
+	Zero(out, stream);
     }else{
 	if(!out){
 	    out=curmat(in.Nx(), in.Ny());
@@ -41,7 +41,7 @@ void curcp(curmat &out, const curmat &in, cudaStream_t stream){
 }
 void curcp(curmat &out, const curmat &in){
     if(!in){
-	cuzero(out);
+	Zero(out);
     }else{
 	if(!out){
 	    out=curmat(in.Nx(), in.Ny());
@@ -76,7 +76,7 @@ void curaddcabs2(curmat &out, Real alpha, const cucmat &in, Real beta, cudaStrea
     if(!out){
 	out=curmat(in.Nx(),in.Ny());
     }else if(alpha==0){
-	cuzero(out, stream);
+	Zero(out, stream);
     }
     addcabs2_do<<<DIM(in.Nx()*in.Ny(), 256),0,stream>>>
 	(out(), alpha, in(), beta, in.Nx()*in.Ny());
@@ -84,7 +84,7 @@ void curaddcabs2(curmat &out, Real alpha, const cucmat &in, Real beta, cudaStrea
 void curscale(curmat &in, Real alpha, cudaStream_t stream){
     if(!in) return;
     if(alpha==0) {
-	cuzero(in, stream);
+	Zero(in, stream);
     }else if(Z(fabs)(alpha-(Real)1)>EPS){
 	int n=in.Nx()*in.Ny();
 	scale_do<<<DIM(n,256), 0, stream>>>(in(), n, alpha); 
@@ -159,7 +159,7 @@ void curcellmm(curcell &C, Real alpha, const curcell &A, const curcell &B,
     }else{
 	assert(C.Nx()==nx && C.Ny()==ny);
 	if(alpha==0){
-	    cuzero(C, stream);
+	    Zero(C, stream);
 	}else if(Z(fabs)(alpha-(Real)1)>EPS){
 	    curcellscale(C, alpha, stream);
 	}
@@ -175,27 +175,6 @@ void curcellmm(curcell &C, Real alpha, const curcell &A, const curcell &B,
 	}
     }
 }
-/*Transpose a matrix in naive way. Faster way is to use shared memory and handle
-  a block each time.*/
-__global__ void transpose(Real *restrict out, const Real *restrict in, int nx, int ny){
-    const int stepx=blockDim.x * gridDim.x;
-    const int stepy=blockDim.y * gridDim.y;
-    const int ix0=threadIdx.x+blockDim.x*blockIdx.x;
-    const int iy0=threadIdx.y+blockDim.y*blockIdx.y;
-    for(int iy=iy0; iy<ny; iy+=stepy){
-	for(int ix=ix0; ix<nx; ix+=stepx){
-	    out[iy+ix*ny]=in[ix+iy*nx];
-	}
-    }
-}
-/*Transpose a matrix*/
-template <>
-curmat curmat::trans(stream_t &stream){
-    curmat B=curmat(ny, nx);
-    transpose<<<dim3(16,16),dim3(16,16),0,stream>>>
-	(B(), p, nx, ny);
-    return B;
-}
 
 /*
   A=A*beta+B*alpha;
@@ -203,7 +182,7 @@ curmat curmat::trans(stream_t &stream){
 void curcelladd(curcell &A, Real beta, const curcell &B, Real alpha, cudaStream_t stream){
     if(!B) return;
     if(!A){
-	A=B.New();
+	A=New(B);
     }else{
 	assert(A.Nx()==B.Nx() && A.Ny()==B.Ny());
     }
@@ -243,7 +222,7 @@ void curadd(curmat &out, const curmat &in, Real *alpha, Real alpha2, cudaStream_
 void curcelladd(curcell &A, const curcell &B, Real* alpha, Real alpha2, cudaStream_t stream){
     if(!B) return;
     if(!A){
-	A=B.New();
+	A=New(B);
     }else{
 	assert(A.Nx()==B.Nx() && A.Ny()==B.Ny());
     }
@@ -273,7 +252,7 @@ void curadd(curmat &out, Real *alpha1, const curmat &in, cudaStream_t stream){
 void curcelladd(curcell &A, Real* alpha1, const curcell &B, cudaStream_t stream){
     if(!B) return;
     if(!A){
-	A=B.New();
+	A=New(B);
     }else{
 	assert(A.Nx()==B.Nx() && A.Ny()==B.Ny());
     }

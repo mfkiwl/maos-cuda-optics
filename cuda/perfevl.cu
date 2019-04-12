@@ -179,7 +179,7 @@ static void psfcomp(cuccell psfs, const curmat &iopdevl, int nwvl, int ievl, int
 	    if(wvf.Nx()!=cuglobal->perf.nembed[iwvl]){
 		wvf=cucmat(cuglobal->perf.nembed[iwvl], cuglobal->perf.nembed[iwvl]);
 	    }else{
-		cuzero(wvf, stream);
+		Zero(wvf, stream);
 	    }
 	    embed_wvf_do<<<DIM(iopdevl.Nx(),256),0,stream>>>
 		(wvf(), iopdevl(), cudata->perf.amp, cudata->perf.embed[iwvl], nloc, cuglobal->perf.wvls[iwvl]);
@@ -204,7 +204,7 @@ static void psfcomp_r(curmat *psf, const curmat &iopdevl, int nwvl, int ievl, in
 	if(wvf.Nx()!=cuglobal->perf.nembed[iwvl]){
 	    wvf=cucmat(cuglobal->perf.nembed[iwvl], cuglobal->perf.nembed[iwvl]);
 	}else{
-	    cuzero(wvf, stream);
+	    Zero(wvf, stream);
 	}
 	if(!psf[iwvl]) psf[iwvl]=curmat(cuglobal->perf.psfsize[iwvl], cuglobal->perf.psfsize[iwvl]);
 	if(cuglobal->perf.psfsize[iwvl]==1){
@@ -350,7 +350,7 @@ void gpu_perfevl_queue(thread_t *info){
 		if(!parms->gpu.psf){ //need to move psf from GPU to CPU for accumulation.
 		    for(int iwvl=0; iwvl<nwvl; iwvl++){
 			add2cpu(&simu->evlpsfolmean->p[iwvl], 1, cudata->perf.psfol[iwvl], 1, stream);
-			cuzero(cudata->perf.psfol[iwvl]); //do not accumulate in gpu.
+			Zero(cudata->perf.psfol[iwvl]); //do not accumulate in gpu.
 		    }
 		}
 	    }
@@ -424,7 +424,7 @@ void gpu_perfevl_queue(thread_t *info){
 		if(!parms->gpu.psf){
 		    for(int iwvl=0; iwvl<nwvl; iwvl++){
 			add2cpu(&simu->evlpsfmean->p[iwvl+ievl*nwvl], 1, cuglobal->perf.psfcl[iwvl+ievl*nwvl], 1, stream);
-			cuzero(cuglobal->perf.psfcl[iwvl+ievl*nwvl]); 
+			Zero(cuglobal->perf.psfcl[iwvl+ievl*nwvl]); 
 		    }
 		}
 	    }
@@ -521,7 +521,7 @@ void gpu_perfevl_ngsr(SIM_T *simu, double *cleNGSm){
 	    if(!parms->gpu.psf){
 		for(int iwvl=0; iwvl<nwvl; iwvl++){
 		    add2cpu(&simu->evlpsfmean_ngsr->p[iwvl+ievl*nwvl], 1, cuglobal->perf.psfcl_ngsr[iwvl+ievl*nwvl], 1, stream);
-		    cuzero(cuglobal->perf.psfcl_ngsr[iwvl+ievl*nwvl]); 
+		    Zero(cuglobal->perf.psfcl_ngsr[iwvl+ievl*nwvl]); 
 		}
 	    }
 	}

@@ -16,8 +16,8 @@
   MAOS.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AOS_MATARRH_TYPE_H
-#define AOS_MATARRH_TYPE_H
+#ifndef AOS_MATH_TYPE_H
+#define AOS_MATH_TYPE_H
 #include "numtype.h"
 /**
    \file type.h Defines the math data types like dmat, cmat, dcell, ccell,

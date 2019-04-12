@@ -104,7 +104,7 @@ cushgeom_t::cushgeom_t(wfscfg_t *wfscfg)
 }
 void cushgeom_t::output(){
     error("To implement\n");
-    cuzero(gradacc);
+    Zero(gradacc);
 }
 __global__ void add_geom_noise_do(Real *restrict g, const Real *restrict nea, 
 				  int nsa, curandState *restrict rstat);

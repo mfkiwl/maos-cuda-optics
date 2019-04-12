@@ -112,7 +112,7 @@ cusolve_cbs::cusolve_cbs(spchol *_C, dmat *_Up, dmat *_Vp){
     }
 }
 Real cusolve_cbs::solve(curcell &xout, const curcell &xin, stream_t &stream){
-    if(!xout) xout=xin.New();
+    if(!xout) xout=New(xin);
     if(Cl.Type()==SP_CSC){
 	chol_solve(xout.M()(), xin.M()(), stream);
     }else{

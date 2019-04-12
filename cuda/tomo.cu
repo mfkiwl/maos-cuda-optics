@@ -206,10 +206,10 @@ cutomo_grid::cutomo_grid(const PARMS_T *parms, const RECON_T *recon,
 	dcellfree(pdftt);
     }
     {
-	GPp=Cell<short2,Gpu>(nwfs, 1);
+	GPp=CuCell<short2>(nwfs, 1);
 	GP=cuspcell(nwfs, 1);
 	GPscale=new Real[nwfs];
-	saptr=Cell<int,Gpu>(nwfs, 1);
+	saptr=CuCell<int>(nwfs, 1);
 	for(int iwfs=0; iwfs<nwfs; iwfs++){
 	    const int ipowfs=parms->wfsr[iwfs].powfs;
 	    const int iwfs0=parms->powfs[ipowfs].wfsr->p[0];
@@ -575,17 +575,17 @@ void cutomo_grid::do_gp(curcell &_grad, const curcell &_opdwfs, int ptt2, stream
     if(_opdwfs){
 	for(int iwfs=0; iwfs<nwfs; iwfs++){
 	    if(GPp[iwfs] || !GP[iwfs]) continue;
-	    cuzero(_grad[iwfs], stream);
+	    Zero(_grad[iwfs], stream);
 	    cuspmul(_grad[iwfs](), GP[iwfs], _opdwfs[iwfs](), 1, 'n', 1, stream);
 	}
     }
-    cuzero(ttf, stream);
+    Zero(ttf, stream);
     gpu_gp_do<<<dim3(24,1,nwfs), dim3(DIM_GP,1), 0, stream>>>
 	(gpdata(), _grad.pm(), ttf(), ttf()+nwfs*2, _opdwfs?_opdwfs.pm():NULL, ptt2);
 }
 void cutomo_grid::do_gpt(curcell &_opdwfs, curcell &_grad, int ptt2, stream_t &stream){
     if(_opdwfs){
-	cuzero(_opdwfs.M(), stream);
+	Zero(_opdwfs.M(), stream);
     }
     //Does  GP'*NEA*(1-TTDF) if _opdwfs!=0 and GPp!=0 or NEA*(1-TTDF)
     gpu_gpt_do<<<dim3(24,1,nwfs), dim3(DIM_GP,1), 0, stream>>>
@@ -594,7 +594,7 @@ void cutomo_grid::do_gpt(curcell &_opdwfs, curcell &_grad, int ptt2, stream_t &s
     if(_opdwfs){//Does GP' for GP with sparse
 	for(int iwfs=0; iwfs<nwfs; iwfs++){
 	    if(GPp[iwfs] || !GP[iwfs]) continue;
-	    cuzero(_opdwfs[iwfs], stream);
+	    Zero(_opdwfs[iwfs], stream);
 	    cuspmul(_opdwfs[iwfs](), GP[iwfs], _grad[iwfs](), 1, 't', 1, stream);
 	}
     }
@@ -620,7 +620,7 @@ void cutomo_grid::Rt(curcell &gout, Real beta,  curcell &xin, Real alpha, stream
     }else{
 	curcellscale(gout, beta, stream);
     }
-    opdwfs.M().zero(stream);
+    Zero(opdwfs.M(), stream);
     hx.forward(opdwfs.pm, xin.pm, alpha, NULL, stream);
     do_gp(gout, opdwfs, 1, stream);
     curcell dummy;
@@ -648,7 +648,7 @@ void cutomo_grid::L(curcell &xout, Real beta, const curcell &xin, Real alpha, st
 #define RECORD(i)
 #endif
     RECORD(0);
-    cuzero(opdwfs.M(), stream);
+    Zero(opdwfs.M(), stream);
     //xin to opdwfs
     hx.forward(opdwfs.pm, xin.pm, 1, NULL, stream);
     RECORD(1);

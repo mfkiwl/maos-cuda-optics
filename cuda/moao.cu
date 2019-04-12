@@ -51,7 +51,7 @@ cumoao_t::cumoao_t(const PARMS_T *parms, MOAO_T *moao, dir_t *dir, int _ndir, cu
 }
 Real cumoao_t::moao_solve(curccell &xout, const curcell &xin, const curcell &ain, stream_t &stream){
     for(int idir=0; idir<ndir; idir++){
-	cuzero(opdfit.M(), stream);
+	Zero(opdfit.M(), stream);
 	//cuwrite(xin, "xin_%d", idir);
 	//dbg("hxp[%d]\n", idir);
 	hxp[idir].forward(opdfit.pm, xin.pm, 1.f, NULL, stream);//tomography
@@ -62,7 +62,7 @@ Real cumoao_t::moao_solve(curccell &xout, const curcell &xin, const curcell &ain
 	//cuwrite(opdfit, "opdfit1_%d", idir);
 	grid->W01.apply(opdfit2.M()(), opdfit.M()(), opdfit.Nx(), stream);
 	//cuwrite(opdfit2, "opdfit2_%d", idir);
-	cuzero(rhs.M(), stream);
+	Zero(rhs.M(), stream);
 	ha.backward(opdfit2.pm, rhs.pm, 1, NULL, stream);
 	//cuwrite(rhs, "rhs_%d", idir);
 	solve(xout[idir], rhs, stream);
@@ -84,7 +84,7 @@ void cumoao_t::L(curcell &xout, Real beta, const curcell &xin, Real alpha, strea
     }else{
 	curscale(xout.M(), beta, stream);
     }
-    cuzero(opdfit.M(), stream);
+    Zero(opdfit.M(), stream);
     ha.forward(opdfit.pm, xin.pm, 1, NULL, stream);
     grid->W01.apply(opdfit2.M()(), opdfit.M()(), opdfit.Nx(), stream);
     ha.backward(opdfit2.pm, xout.pm, alpha, NULL, stream);

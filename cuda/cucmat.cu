@@ -21,7 +21,7 @@
 void cucscale(cucmat &in, Real alpha, cudaStream_t stream){
     if(!in) return;
     if(alpha==0){
-	cuzero(in, stream);
+	Zero(in, stream);
     }else if(Z(fabs)(alpha-1.f)>EPS){
 	int n=in.Nx()*in.Ny();
 	scale_do<<<DIM(n,256), 0, stream>>>(in(), n, alpha); 

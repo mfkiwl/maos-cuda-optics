@@ -127,7 +127,7 @@ public:
 	cp2gpu(M, _M);
     }
     virtual Real solve(curcell &xout, const curcell &xin, stream_t &stream){
-	if(!xout) xout=xin.New();
+	if(!xout) xout=New(xin);
 	curmv(xout.M()(), 0., M, xin.M()(), 'n', 1., stream);
 	return 0;
     }

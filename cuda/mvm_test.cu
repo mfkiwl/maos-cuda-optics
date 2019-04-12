@@ -193,7 +193,7 @@ void mvm_test(int igpu){
 		//custom method. 10 is optimal
 		int naeach=128;
 		const int nblock=(M*nover+naeach-1)/naeach;
-		cuzero(cuy);
+		Zero(cuy);
 		int is;
 		for(is=0; is<nstream; is++){
 		    stream[is].sync();
@@ -221,7 +221,7 @@ void mvm_test(int igpu){
 	int naeach, mp_count;
 	naeach=128;
 	mp_count=(M+naeach-1)/naeach;
-	cuzero(cuy, stream[0]);stream[0].sync();
+	Zero(cuy, stream[0]);stream[0].sync();
     	event[0].record(stream[0]);
 	for(int i=0; i<N; i+=iN){
 	    int nleft=N-i;
@@ -240,7 +240,7 @@ void mvm_test(int igpu){
 	const int nblock=(M+BLOCKMV_TNX-1)/BLOCKMV_TNX;
 	//const int nblock=1;
 	//new method with blocking
-	cuzero(cuy, stream[0]);stream[0].sync();
+	Zero(cuy, stream[0]);stream[0].sync();
 	cudaProfilerStart();
 	event[0].record(stream[0]);
 	for(int i=0; i<N; i+=iN){

@@ -154,7 +154,7 @@ static void mvm_thread(void* ithread0){
 	    cudaMemcpyAsync(mvm_data->ac[ithread], cudata->mvm_a, nact*sizeof(ATYPE),
 			    cudaMemcpyDeviceToHost, cudata->mvm_stream);
 	    cudaStreamSynchronize(cudata->mvm_stream);
-	    cudata->mvm_a.zero(cudata->mvm_stream);
+	    Zero(cudata->mvm_a, cudata->mvm_stream);
 	    cmds[ithread]=0;
 	}
 	    break;
