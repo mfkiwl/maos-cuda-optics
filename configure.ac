@@ -973,11 +973,12 @@ AC_CONFIG_FILES( [Makefile
 	sys/Makefile
 	math/Makefile
 	lib/Makefile
-	tools/Makefile
+	cuda/Makefile
 	maos/Makefile 
 	skyc/Makefile
+	tools/Makefile
 	mex/Makefile
-	cuda/Makefile
+	bin/Makefile
 	])
 if test -d "${srcdir}/test" ;then
     AC_CONFIG_FILES([test/Makefile])

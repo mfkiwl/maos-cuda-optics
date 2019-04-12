@@ -4,5 +4,6 @@
 #2. Run maos
 #3. run this script at the root of the building directory
 #4. view out/index.html
-lcov --capture --directory . --output-file coverage.info || exit
-genhtml coverage.info --output-directory out
+lcov --capture --directory . - coverage.info || exit
+lcov --remove coverage.info '/usr/*' '/opt/*' '/tmp/*' -o coverage2.info || exit
+genhtml coverage2.info - out

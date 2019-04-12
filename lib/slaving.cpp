@@ -233,19 +233,19 @@ void act_stuck(loccell *aloc, void *HA_, const lcell *stuck){
     if(!stuck || !HA_) return; 
     cell *HA=(cell*)HA_;
     int ndm=aloc->nx;
+    int nfit=0;
+    if(HA->ny==ndm){
+	nfit=HA->nx;
+    }else if(HA->ny==1 && HA->nx==ndm){
+	nfit=1;
+    }else{
+	error("HA: Invalid format %ldx%ld\n", HA->nx, HA->ny);
+    }
     for(int idm=0; idm<ndm; idm++){
 	if(!stuck->p[idm]){
 	    continue;
 	}
 	const int nact=aloc->p[idm]->nloc;
-	int nfit=0;
-	if(HA->ny==ndm && HA->nx>1){
-	    nfit=HA->nx;
-	}else if(HA->ny==1 && HA->nx==ndm){
-	    nfit=1;
-	}else{
-	    error("HA: Invalid format %ldx%ld\n", HA->nx, HA->ny);
-	}
 	for(int ifit=0; ifit<nfit; ifit++){
 	    cell *HAi=HA->p[idm*nfit+ifit];
 	    if(HAi->id==M_DBL){//dense

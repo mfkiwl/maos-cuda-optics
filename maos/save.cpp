@@ -248,7 +248,7 @@ void save_dmreal(SIM_T *simu){
 	for(int idm=0; idm<parms->ndm; idm++){
 	    if(simu->dmreal && simu->dmreal->p[idm]){
 		drawopd("DM", simu->recon->aloc->p[idm], simu->dmreal->p[idm]->p,parms->dbg.draw_opdmax->p,
-			"Actual DM Actuator Position","x (m)", "y (m)", "Real %d",idm);
+			"DM Actuator Stroke","x (m)", "y (m)", "Real %d",idm);
 	    }
 	}
     }

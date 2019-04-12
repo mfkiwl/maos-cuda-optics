@@ -40,14 +40,15 @@ esac
 fnlog=maos_check_${D}.log
 fnres=maos_check_${D}.res
 echo > $fnlog
-echo "D is ${D}m. DM order is $((D*2))." > $fnres
+echo "D is ${D}m. DM order is $((D*2))." |tee $fnres
 ii=0
 
 function run_maos(){
-    kind=$1
+    kind="$1"
     shift
-    echo $kind >>$fnlog
-    ./maos sim.end=1000 $args "$*" >> $fnlog
+    echo "$kind" >>$fnlog
+    stdbuf -o0 printf "%-20s" "$kind" | tee $fnres
+    stdbuf -o0 ./maos sim.end=1000 $args "$*" >> $fnlog
     if [ $? == 0 ];then
 	RMS[ii]=$(tail -n5 $fnlog |grep 'Mean:' |cut -d ':' -f 2)
 	a=${RMS[$ii]%.*}
@@ -59,21 +60,20 @@ function run_maos(){
     fi
 
     b=${REF[$ii]%.*}
-    echo -n $kind >>$fnres
-    echo -n "${RMS[$ii]} nm, Ref: ${REF[$ii]} nm, " >>$fnres
+    stdbuf -o0 printf "%7s nm (%7s nm)" "${RMS[$ii]}" "${REF[$ii]}" |tee $fnres
     if [ $a -ne 0 -a "$b" != "error" ];then
-	echo $(((a-b)*100/b))% >> $fnres
+	printf "%4s%%\n" $(((a-b)*100/b)) |tee $fnres
     else
-	echo >> $fnres
+	echo |tee $fnres
     fi
     ii=$((ii+1)) 
 }
 
 
 
-run_maos "Ideal fit (cpu): " sim.idealfit=1 -g-1 
+run_maos "Ideal fit (cpu): " sim.idealfit=1 
 
-run_maos "Ideal tomo (cpu):" sim.idealtomo=1 -g-1 
+run_maos "Ideal tomo (cpu):" sim.idealtomo=1  
 
 run_maos "LGS MCAO (inte): " recon.split=0 tomo.precond=0
 
@@ -111,6 +111,6 @@ run_maos "LGS LTAO (inte): " dm_single.conf fov_oa.conf recon.split=0
 
 run_maos "LGS LTAO (split):" dm_single.conf fov_oa.conf recon.split=1
 
-echo ${RMS[*]}
+echo ${RMS[*]} |tee $fnres
 
-exit ans
+exit $ans

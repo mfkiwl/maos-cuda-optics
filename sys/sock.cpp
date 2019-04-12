@@ -324,7 +324,7 @@ void listen_port(uint16_t port, char *localpath, int (*responder)(int),
 	}
 	for(int i=0; i<FD_SETSIZE; i++){
 	    if(FD_ISSET(i, &read_fd_set)){
-		if(i==sock){
+		if(i==sock || i==sock_local){
 		    /* Connection request on original socket. */
 		    socklen_t size=sizeof(struct sockaddr_in);
 		    struct sockaddr_in clientname;
@@ -334,19 +334,8 @@ void listen_port(uint16_t port, char *localpath, int (*responder)(int),
 			FD_CLR(i, &active_fd_set);
 			close(i);
 		    }else{
+			socket_nopipe(port2);
 			info("port %d is connected\n", port2);
-			FD_SET(port2, &active_fd_set);
-		    }
-		}else if(i==sock_local){
-		    socklen_t size=sizeof(struct sockaddr_un);
-		    struct sockaddr_un clientname;
-		    int port2=accept(i, (struct sockaddr*)&clientname, &size);
-		    if(port2<0){
-			warning("accept failed: %s. close port %d\n", strerror(errno), i);
-			FD_CLR(i, &active_fd_set);
-			close(i);
-		    }else{
-			info("port %d is connected locally\n", port2);
 			FD_SET(port2, &active_fd_set);
 		    }
 		}else{
