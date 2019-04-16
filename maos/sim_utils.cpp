@@ -1126,15 +1126,15 @@ static void init_simu_dm(SIM_T *simu){
 	    dset((dmat*)simu->dmprojsq->p[idm], invalid_val);
 	}
 	if(parms->fit.square){/*dmreal is already square.*/
-	    free(simu->dmrealsq->p[idm]->p);
-	    simu->dmrealsq->p[idm]->p=simu->dmreal->p[idm]->p;
-	    free(simu->dmrealsq->p[idm]->nref);
-	    simu->dmrealsq->p[idm]->nref=NULL;
+	    //free(simu->dmrealsq->p[idm]->p);
+	    simu->dmrealsq->p[idm]->Replace(simu->dmreal->p[idm]->p);
+	    //free(simu->dmrealsq->p[idm]->nref);
+	    //simu->dmrealsq->p[idm]->nref=NULL;
 	    if(simu->dmprojsq){
-		free(simu->dmprojsq->p[idm]->p);
-		simu->dmprojsq->p[idm]->p=simu->dmproj->p[idm]->p;
-		free(simu->dmprojsq->p[idm]->nref);
-		simu->dmprojsq->p[idm]->nref=NULL;
+		//free(simu->dmprojsq->p[idm]->p);
+		simu->dmprojsq->p[idm]->Replace(simu->dmproj->p[idm]->p);
+		//free(simu->dmprojsq->p[idm]->nref);
+		//simu->dmprojsq->p[idm]->nref=NULL;
 	    }
 	}
     }

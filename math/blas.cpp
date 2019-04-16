@@ -140,7 +140,7 @@ X(mat)* X(inv)(const X(mat) *A){
    compute the pseudo inverse of matrix A with weigthing of full matrix W or
    sparse matrix weighting Wsp.  For full matrix, wt can be either W or diag (W)
    for diagonal weighting.  B=inv(A'*W*A)*A'*W; */
-X(mat) *X(pinv)(const X(mat) *A, const void *W){
+X(mat) *X(pinv)(const X(mat) *A, const TwoDim *W){
     if(!A) return NULL;
     X(mat) *AtW=NULL;
     /*Compute AtW=A'*W */
@@ -526,7 +526,7 @@ X(cell)* X(cellinv)(X(cell) *A){
 */
 X(cell)* X(cellinvspd_each)(X(cell) *A){
     X(cell) *out=NULL;
-    X(cellcp)(&out,A);
+    X(cellcp)((TwoDim**)&out,A);
     for(int i=0; i<out->nx*out->ny; i++){
 	X(invspd_inplace)(out->p[i]);
     }
@@ -537,7 +537,7 @@ X(cell)* X(cellinvspd_each)(X(cell) *A){
    compute the pseudo inverse of block matrix A.  A is n*p cell, wt n*n cell or
    sparse cell.  \f$B=inv(A'*W*A)*A'*W\f$  */
 X(cell)* X(cellpinv)(const X(cell) *A, /**<[in] The matrix to pseudo invert*/
-		     const void *W    /**<[in] The weighting matrix. dense or sparse*/
+		     const TwoDim *W    /**<[in] The weighting matrix. dense or sparse*/
     ){
     if(!A) return NULL;
     X(cell) *wA=NULL;

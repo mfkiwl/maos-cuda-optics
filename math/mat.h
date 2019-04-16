@@ -26,9 +26,8 @@
     X(mat) *X(new_ref)(long nx, long ny, T *p) CHECK_UNUSED_RESULT;	\
     X(mat) *X(new_data)(long nx, long ny, T *p) CHECK_UNUSED_RESULT;	\
     X(mat) *X(new)(long nx, long ny) CHECK_UNUSED_RESULT;		\
-    X(mat) *X(mat_cast)(const void *A) CHECK_UNUSED_RESULT;		\
+    X(mat) *X(mat_cast)(const TwoDim *A) CHECK_UNUSED_RESULT;		\
     void X(init)(X(mat)**A, long nx, long ny) ;				\
-    void X(free_keepdata)(X(mat) *A);					\
     void X(free_do)(X(mat) *A, int keepdata);				\
     X(mat) *X(ref)(const X(mat) *in) CHECK_UNUSED_RESULT;		\
     X(mat) *X(ref_reshape)(const X(mat) *in, long nx, long ny) CHECK_UNUSED_RESULT; \
@@ -55,20 +54,20 @@
     R X(sumsq)(const X(mat) *in) CHECK_UNUSED_RESULT;			\
     void X(fftshift)(X(mat) *A);					\
     void X(cpcorner2center)(X(mat) *A, const X(mat)*B);			\
-    X(cell) *X(cell_cast)(const void *A) CHECK_UNUSED_RESULT;		\
+    X(cell) *X(cell_cast)(const TwoDim *A) CHECK_UNUSED_RESULT;		\
     X(cell) *X(cellnew2)(const X(cell) *A);				\
     X(cell) *X(cellnew3)(long nx, long ny, long *nnx, long *nny);	\
     X(cell) *X(cellnew_same)(long nx, long ny, long mx, long my);	\
-    void X(cellzero)(void *dc);						\
+    void X(cellzero)(TwoDim *dc);						\
     void X(cellset)(X(cell)*dc, T alpha);				\
     X(cell) *X(celltrans)(const X(cell) *A);				\
     X(cell) *X(cellref)(const X(cell) *in);				\
     X(cell) *X(celldup)(const X(cell) *in);				\
-    void X(cellcp)(void* out0, const void*in);				\
+    void X(cellcp)(void* out0, const TwoDim*in);			\
     X(cell) *X(cellreduce)(const X(cell) *A, int dim);			\
     X(cell) *X(cellcat)(const X(cell) *A, const X(cell) *B, int dim);	\
     X(cell) *X(cellcat_each)(const X(cell) *A, const X(cell) *B, int dim); \
-    X(mat) *X(cell2m)(const void *A);					\
+    X(mat) *X(cell2m)(const TwoDim *A);					\
     X(cell)* X(2cellref)(const X(mat) *A, long*dims, long ndim);	\
     void X(2cell)(X(cell) **B, const X(mat) *A, const X(cell) *ref);	\
 

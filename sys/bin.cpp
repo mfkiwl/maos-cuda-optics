@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <sys/mman.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <limits.h>
@@ -65,17 +64,7 @@ struct file_t{
     char *fn;  /**<The disk file name*/
     int fd;    /**<The underlying file descriptor, used for locking. */
 };
-/*
-  Describes the information about mmaped data. Don't unmap a segment of mmaped
-  memory, which causes the whole page to be unmapped. Instead, reference count
-  the mmaped file and unmap the segment when the nref dropes to 1.
-*/
-struct mmap_t{
-    void *p;  /**<points to the beginning of mmaped memory for this type of data.*/
-    long n;   /**<length of mmaped memory.*/
-    long nref;/**<Number of reference.*/
-    int fd;   /**<file descriptor. close it if not -1.*/
-};
+
 /**
    Disables file saving when set to 1.
 */
@@ -925,39 +914,6 @@ void writedbl(const double *p, long nx, long ny, const char*format,...){
 void writeflt(const float *p, long nx, long ny, const char*format,...){
     format2fn;
     writearr(fn, 1, sizeof(float), M_FLT, NULL, p, nx, ny);
-}
-
-/**
-   Unreference the mmaped memory. When the reference drops to zero, unmap it.
-*/
-void mmap_unref(struct mmap_t *in){
-    if(in->nref>1){
-	in->nref--;
-    }else{
-	munmap(in->p, in->n);
-	if(in->fd!=-1){
-	    close(in->fd);
-	}
-	free(in);
-    }
-}
-/**
-   Create a mmap_t object.
-*/
-struct mmap_t *mmap_new(int fd, void *p, long n){
-    struct mmap_t *out=mycalloc(1,struct mmap_t);
-    out->p=p;
-    out->n=n;
-    out->nref=1;
-    out->fd=fd;
-    return out;
-}
-/**
-   Add a reference to a mmap_t.
-*/
-mmap_t*mmap_ref(mmap_t *in){
-    in->nref++;
-    return in;
 }
 
 /**

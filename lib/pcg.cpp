@@ -54,14 +54,14 @@ double pcg(dcell **px,    /**<[in,out] The output vector. input for warm restart
     for(int k=0; k<maxiter; k++){
 	if(k%100==0){ /*restart every 100 steps exclude beginning */
 	    /*computes r0=b-A*x0 */
-	    dcellcp(&r0, b);/*r0=b; */
+	    dcellcp((TwoDim**)&r0, b);/*r0=b; */
 	    (*Amul)(&r0, A, x0, -1);/*r0=r0+(-1)*A*x0 */
 	    if(Mmul){
 		(*Mmul)(&z0,M,r0);
 	    }else{
 		z0=r0;
 	    }
-	    dcellcp(&p0, z0);
+	    dcellcp((TwoDim**)&p0, z0);
 	    r0z1=dcellinn(r0,z0);
 	}
 	if(PRINT_RES){

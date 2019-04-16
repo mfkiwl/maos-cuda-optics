@@ -36,8 +36,8 @@ static inline void cuwritedata(const Array<T, Gpu> &A, file_t *fp){
 	error("Invalid type\n");
     }
     char *header=0;
-    if(A.header.length()){
-	header=strdup(A.header.c_str());
+    if(A.desc.length()){
+	header=strdup(A.desc.c_str());
     }
     if(A && A.Nx()>0 && A.Ny()>0){
 	T *tmp=(T*)malloc(A.Nx()*A.Ny()*sizeof(T));

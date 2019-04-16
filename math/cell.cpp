@@ -24,23 +24,22 @@
    Create a generic cell array.
 */
 cell *cellnew(long nx, long ny){
-    cell *dc;
     if(nx<0) nx=0;
     if(ny<0) ny=0;
-    dc=mycalloc(1,cell);
-    dc->id=MCC_ANY;
+    cell *dc=new cell(nx ,ny);
+    /*dc->id=MCC_ANY;
     dc->nx=nx;
-    dc->ny=ny;
-    if(nx*ny>0){
+    dc->ny=ny;*/
+    /*if(nx*ny>0){
 	dc->p=mycalloc(nx*ny,cell*);
-    }
+	}*/
     return dc;
 }
 
 /**
    Allocate a new array of the same type
  */
-cell *cellnew2(const void *A_){
+cell *cellnew2(const TwoDim *A_){
     const cell *A=(const cell*)A_;
     if(!A){
 	return 0;
@@ -99,7 +98,7 @@ void cellinit2(cell **A, const cell *B){
     }
 }
 
-cell *cell_cast(const void *A){
+cell *cell_cast(const TwoDim *A){
     if(!A) return 0;
     assert(iscell(A));
     return (cell*)A;
@@ -108,7 +107,7 @@ cell *cell_cast(const void *A){
 /**
    Obtain the dimensions.
 */
-void celldim(const void *A_, long *nx, long *ny, long **nxs, long **nys){
+void celldim(const TwoDim *A_, long *nx, long *ny, long **nxs, long **nys){
     const cell *A=cell_cast(A_);
     *nxs=mycalloc(A->nx,long);
     *nys=mycalloc(A->ny,long);
@@ -136,7 +135,7 @@ void celldim(const void *A_, long *nx, long *ny, long **nxs, long **nys){
 /**
    Resize a generic cell array.
 */
-void cellresize(void *in, long nx, long ny){
+void cellresize(TwoDim *in, long nx, long ny){
     cell *A=cell_cast(in);
     if(A->nx==nx || A->ny==1){
 	int nold=A->nx*A->ny;
@@ -176,7 +175,8 @@ void cellresize(void *in, long nx, long ny){
 /**
    free a mat or cell object.
 */
-void cellfree_do(void *A){
+#define cellfree_do(A) delete A
+/*void cellfree_do(TwoDim *A){
     if(!A) return;
     uint32_t id=((cell*)A)->id;
     switch(id){
@@ -188,10 +188,8 @@ void cellfree_do(void *A){
 	    }
 	    memset(dc->p, 0, sizeof(void*)*dc->nx*dc->ny);
 	    free(dc->p);dc->p=0;
-	}
-	if(dc->mmap){
-	    mmap_unref(dc->mmap);
-	}else{
+	    }
+	if(!dc->mmap){
 	    free(dc->header);
 	}
 	if(dc->m) cellfree_do(dc->m);
@@ -222,9 +220,9 @@ void cellfree_do(void *A){
     default:
 	error("Unknown id=%u\n", id);
     }
-}
+}*/
 
-void writedata_by_id(file_t *fp, const void *A_, uint32_t id){
+void writedata_by_id(file_t *fp, const TwoDim *A_, uint32_t id){
     const cell *A=(const cell*)A_;
     if(A){
 	if(!id){
@@ -297,7 +295,7 @@ void writedata_by_id(file_t *fp, const void *A_, uint32_t id){
     }
 }
 
-void write_by_id(const void *A, uint32_t id, const char* format,...){
+void write_by_id(const TwoDim *A, uint32_t id, const char* format,...){
     format2fn;
     file_t *fp=zfopen(fn,"wb");
     writedata_by_id(fp, A, id);
@@ -309,8 +307,8 @@ cell *readdata_by_id(file_t *fp, uint32_t id, int level, header_t *header){
 	header=&header2;
 	read_header(header, fp);
     }
-    void *out=0;
-    if(level<0 && !iscell(&header->magic)){
+    TwoDim *out=0;
+    if(level<0 && !magic_iscell(header->magic)){
 	level=0;
     }
     if(zfisfits(fp) || level==0){
@@ -360,7 +358,7 @@ cell *readdata_by_id(file_t *fp, uint32_t id, int level, header_t *header){
 	    error("Only support zero or one level of cell when reading fits file\n");
 	}
     }else{
-	if(!iscell(&header->magic)){//wrap array into 1x1 cell
+	if(!magic_iscell(header->magic)){//wrap array into 1x1 cell
 	    cell *dcout=cellnew(1,1);
 	    dcout->p[0]=readdata_by_id(fp, id, level-1, header);
 	    out=dcout;
@@ -399,11 +397,11 @@ cell* readbin(const char *format, ...){
     return read_by_id(0, -1, "%s", fn);
 }
 
-void writebin(const void *A, const char *format, ...){
+void writebin(const TwoDim *A, const char *format, ...){
     format2fn;
     write_by_id(A, 0, "%s", fn);
 }
 
-void writebindata(file_t *fp, const void *A){
+void writebindata(file_t *fp, const TwoDim *A){
     writedata_by_id(fp, A, 0);
 }

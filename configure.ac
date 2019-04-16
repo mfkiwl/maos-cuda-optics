@@ -16,7 +16,7 @@ case "$CXXFLAGS" in
     *-std=*)
     ;;
     *)
-	CXXFLAGS+=" -std=c++11"
+	CXXFLAGS+=" -std=c++11 "
 	;;
 esac
 if test -z "$LIBS" ;then
@@ -919,7 +919,7 @@ if test "$with_cuda" != "no" ;then
     CUDAOPT+=" -Wno-deprecated-gpu-targets"
     CCBINOPT="$OPTScommon $OPTSprof $OPTSextra -fPIC $CXXFLAGS -Wno-unused-parameter"
     CCBINOPT="${CCBINOPT/-fpermissive/}"
-    if test "$cudaver" -lt 100 ;then
+    if test "$cudaver" -lt 100;then
 	CUDA_CXX11=0 #Enable C++11 mode emits cc1 warning for version <10.0
     else
 	CUDA_CXX11=1

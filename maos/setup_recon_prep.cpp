@@ -235,8 +235,8 @@ setup_recon_xloc(RECON_T *recon, const PARMS_T *parms){
 	    double dxr=parms->atmr.dx/parms->fit.pos;
 	    const double guard=parms->tomo.guard*dxr;
 	    create_metapupil(&recon->xcmap->p[ips], 0, 0, parms->dirs, parms->aper.d,ht,dxr,dxr,0,guard,0,0,0,parms->fit.square);
-	    free(recon->xcmap->p[ips]->p);recon->xcmap->p[ips]->p=NULL;
-	    free(recon->xcmap->p[ips]->nref);recon->xcmap->p[ips]->nref=NULL;
+	    //free(recon->xcmap->p[ips]->p);recon->xcmap->p[ips]->p=NULL;
+	    //free(recon->xcmap->p[ips]->nref);recon->xcmap->p[ips]->nref=NULL;
 	}
     }
     recon->xmap=mapcellnew(npsr, 1);

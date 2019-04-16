@@ -34,15 +34,14 @@ X(sp)* X(spnew)(long nx, long ny, long nzmax){
     X(sp) *sp;
     if(nx<0) nx=0;
     if(ny<0) ny=0;
-    sp = mycalloc(1,X(sp));
+    //sp = mycalloc(1,X(sp));
+    sp=new X(sp)(nx, ny);
     sp->id=M_SPT;
     if(nzmax>0){
 	sp->p=mymalloc((ny+1),spint);
 	sp->i=mymalloc(nzmax,spint);
 	sp->x=mymalloc(nzmax,T);
     }
-    sp->nx=nx;
-    sp->ny=ny;
     sp->nzmax=nzmax;
     sp->nz=-1;
     sp->nref=mycalloc(1,int);
@@ -168,7 +167,7 @@ X(sp)* X(spnewrandu)(int nx, int ny, const T mean,
     X(spsetnzmax)(A,count);
     return A;
 }
-X(sp)* X(sp_cast)(const void *A){
+X(sp)* X(sp_cast)(const TwoDim *A){
     if(!A) return 0;
     assert(issp(A));
     return (X(sp)*)A;
@@ -307,7 +306,7 @@ X(spcell) *X(spcellref)(const X(spcell) *A){
 /**
    cast a cell object to X(spcell) after checking
  */
-X(spcell) *X(spcell_cast)(const void *A_){
+X(spcell) *X(spcell_cast)(const TwoDim *A_){
     if(!A_) return 0;
     cell *A=cell_cast(A_);
     for(int i=0; i<A->nx*A->ny; i++){

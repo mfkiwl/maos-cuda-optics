@@ -27,7 +27,7 @@ static void draw_map(file_t *fp, int id){
     if(!suf) suf=strstr(name, ".fits");
     if(suf) suf[0]='\0';
 
-    if(iscell(&header.magic)){
+    if(magic_iscell(header.magic)){
 	for(size_t ii=0; ii<header.nx*header.ny; ii++){
 	    draw_map(fp, ii);
 	}
@@ -55,7 +55,7 @@ static void draw_opd(file_t *fp1, file_t *fp2, int id){
     header_t header1={0,0,0,0}, header2={0,0,0,0};
     read_header(&header1, fp1);
     read_header(&header2, fp2);
-    if(iscell(&header1.magic) && iscell(&header2.magic)){ /*cells */
+    if(magic_iscell(header1.magic) && magic_iscell(header2.magic)){ /*cells */
 	if(header1.nx*header1.ny!=header2.nx*header2.ny){
 	    error("cell arrays does have the same length.\n");
 	}
@@ -86,7 +86,7 @@ static void draw_loc(file_t *fp, int id){
     char *suf=strstr(name, ".bin");
     if(!suf) suf=strstr(name, ".fits");
     if(suf) suf[0]='\0';
-    if(iscell(&header.magic)){
+    if(magic_iscell(header.magic)){
    	for(size_t ii=0; ii<header.nx*header.ny; ii++){
 	    draw_loc(fp, ii);
 	}

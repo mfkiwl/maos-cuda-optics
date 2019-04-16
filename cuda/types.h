@@ -17,9 +17,6 @@
 */
 #ifndef AOS_CUDA_TYPES_H
 #define AOS_CUDA_TYPES_H
-#include <typeinfo>
-#include <string>
-using std::string;
 #include "../math/array.h"
 #include "common.h"
 #include "kernel.h"
@@ -78,7 +75,9 @@ public:
 	cudaMemcpy(pout, pin, size, cudaMemcpyHostToDevice);
     }
 };
-
+/**
+   A special Cell with pm.
+ */
 template <typename T>
 class CuCell:public Cell<T, Gpu>{
     typedef Cell<T, Gpu> Parent;

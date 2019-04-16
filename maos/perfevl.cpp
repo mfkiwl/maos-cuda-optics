@@ -253,7 +253,7 @@ void perfevl_ievl(thread_t *info){
 	      tomography output directly.
 	    */
 	    if(simu->opdr){
-		map_t xmap;
+		//map_t xmap;
 		for(int ipsr=0; ipsr<npsr; ipsr++){
 		    double hl=parms->atmr.ht->p[ipsr];
 		    double scale = 1. - hl/parms->evl.hs->p[ievl];
@@ -261,8 +261,10 @@ void perfevl_ievl(thread_t *info){
 		    double displacex=parms->evl.thetax->p[ievl]*hl;
 		    double displacey=parms->evl.thetay->p[ievl]*hl;
 		    if(parms->tomo.square){
-			memcpy(&xmap, recon->xmap->p[ipsr], sizeof(map_t));
-			xmap.p=simu->opdr->p[ipsr]->p;
+			map_t xmap(*recon->xmap->p[ipsr]);
+			xmap.Replace(simu->opdr->p[ipsr]->p);
+			//memcpy(&xmap, recon->xmap->p[ipsr], sizeof(map_t));
+			//xmap.p=simu->opdr->p[ipsr]->p;
 			prop_grid(&xmap, aper->locs, iopdevl->p, -1,
 				  displacex, displacey, scale, 0, 0, 0);
 		    }else{

@@ -44,7 +44,7 @@ zfarr* zfarr_init(long nx, long ny,const char*format,...){
 /**
    Append a A of type type into the zfarr ca, at location i.
 */
-void zfarr_push(zfarr *ca, int i, const void *p){
+void zfarr_push(zfarr *ca, int i, const TwoDim *p){
     if(!ca){
 	warning_once("zfarr is NULL\n");
 	return;

@@ -45,9 +45,9 @@ X(sp) *X(spref)(X(sp) *A) CHECK_UNUSED_RESULT;\
 X(sp) *X(spdup)(const X(sp) *A) CHECK_UNUSED_RESULT;\
 X(sp) *X(spnew2)(const X(sp) *A) CHECK_UNUSED_RESULT;\
 X(sp) *X(spnewrandu)(int nx, int ny, const T mean, R fill,rand_t *rstat) CHECK_UNUSED_RESULT;\
-X(sp) *X(SP)(void*)  CHECK_UNUSED_RESULT;\
+X(sp) *X(SP)(TwoDim*)  CHECK_UNUSED_RESULT;\
 void X(spsetnzmax)(X(sp) *sp, long nzmax);\
-X(sp)* X(sp_cast)(const void *A);\
+X(sp)* X(sp_cast)(const TwoDim *A);\
 void X(spfree_do)(X(sp) *sp);\
 void X(spdisp)(const X(sp) *sp);\
 int X(spcheck)(const X(sp) *sp);\
@@ -55,7 +55,7 @@ void X(spscale)(X(sp) *A, const T beta);\
 void X(spscalex)(X(sp) *A, const X(mat) *xs);	\
 void X(spscaley)(X(sp) *A, const X(mat) *ys);	\
 X(spcell) *X(spcellref)(const X(spcell)*in);\
-X(spcell) *X(spcell_cast)(const void *A_);\
+X(spcell) *X(spcell_cast)(const TwoDim *A_);\
 void X(spcellscale)(X(spcell) *A, const T beta);\
 X(sp)* X(spnewdiag)(long N, T *vec, T alpha) CHECK_UNUSED_RESULT;\
 X(mat) *X(spdiag)(const X(sp) *A) CHECK_UNUSED_RESULT;\
@@ -66,17 +66,16 @@ void X(spmm)(X(mat) **yout, const X(sp) *A, const X(mat) *x, const char trans[2]
 void X(mulsp)(X(mat) **yout, const X(mat) *x, const X(sp) *A, const char trans[2], const T alpha); \
 T X(spwdinn)(const X(mat) *y, const X(sp) *A, const X(mat) *x) CHECK_UNUSED_RESULT;\
 T X(spcellwdinn)(const X(cell) *y, const X(spcell) *A, const X(cell) *x) CHECK_UNUSED_RESULT;\
-void X(cellmulsp)(X(cell) **C0, const X(cell) *A, const X(spcell) *B, R alpha); \
-void X(cellmm)(void *C0_, const void *A_, const void *B_, const char trans[2], const R alpha); \
-cell* X(cellmm2)(const void *A_, const void *B_, const char trans[2]);	\
+void X(cellmm)(void *C0_, const TwoDim *A_, const TwoDim *B_, const char trans[2], const R alpha); \
+cell* X(cellmm2)(const TwoDim *A_, const TwoDim *B_, const char trans[2]);	\
 X(sp) *X(2sp)(X(mat)*A, R thres);				       \
 void X(spfull)(X(mat) **out0, const X(sp) *A, const char trans, const T f); \
 void X(spcellfull)(X(cell) **out0, const X(spcell) *A, const char trans, const T f); \
 X(sp) *X(spadd2)(const X(sp) *A, T a, const X(sp)*B,T b) CHECK_UNUSED_RESULT; \
 void X(spadd)(X(sp) **A0, T alpha, const X(sp) *B, T beta); \
-void X(celladd)(void *A_, R ac, const void *B_, R bc);	\
+void X(celladd)(void *A_, R ac, const TwoDim *B_, R bc);	\
 void X(spaddI)(X(sp) *A0, T alpha);\
-void X(celladdI)(void *A_, T alpha);\
+void X(celladdI)(TwoDim *A_, T alpha);\
 X(sp) *X(sptrans)(const X(sp) *A) CHECK_UNUSED_RESULT;\
 void X(spconj)(X(sp)*);\
 X(sp) *X(spmulsp)(const X(sp) *A, const X(sp) *B, const char trans[2]) CHECK_UNUSED_RESULT;	\

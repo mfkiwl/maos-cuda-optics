@@ -40,7 +40,7 @@ void default_quitfun(const char *msg);
 #endif
 
 
-#if defined(__cplusplus) && !defined(AOS_CUDA_GPU_H)
+#if defined(__cplusplus) //&& !defined(AOS_CUDA_GPU_H)
 //c++ mode, not CUDA
 #include <csignal>
 #include <cstdarg>

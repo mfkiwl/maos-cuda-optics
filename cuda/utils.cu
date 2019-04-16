@@ -305,7 +305,7 @@ static void add2cpu(T * restrict *dest, R alpha, const S *src, R beta, long n,
     if(mutex) UNLOCK(*mutex);
     free(tmp);
 }
-#define add2cpu_mat(D, T, C)						\
+#define add2cpu_mat(D,E, T, C)						\
     void add2cpu(D##mat **out, T alpha, const Array<C, Gpu> &in, T beta, \
 		 cudaStream_t stream, pthread_mutex_t *mutex){		\
 	if(!in){							\
@@ -317,13 +317,13 @@ static void add2cpu(T * restrict *dest, R alpha, const S *src, R beta, long n,
 	}else{								\
 	    assert((*out)->nx*(*out)->ny==in.N());			\
 	}								\
-	add2cpu(&(*out)->p, alpha, in(), beta, in.N(), stream, mutex); \
+	add2cpu((E**)&(*out)->p, alpha, in(), beta, in.N(), stream, mutex); \
     }
 
-add2cpu_mat(s, float, Real)
-add2cpu_mat(d, double,Real)
-add2cpu_mat(z, float, Comp)
-add2cpu_mat(c, double,Comp)
+add2cpu_mat(s, float, float, Real)
+add2cpu_mat(d, double, double,Real)
+add2cpu_mat(z, float2, float, Comp)
+add2cpu_mat(c, double2, double,Comp)
 	
 #define add2cpu_cell(D, T, C)				    \
     void add2cpu(D##cell **out, T alpha, const C &in, T beta,	\
@@ -357,7 +357,7 @@ add2cpu_cell(z, float, cuccell)
 	DO(cudaMemcpy(pout->p, in(), in.N()*sizeof(double),		\
 		      cudaMemcpyDeviceToHost));				\
 	if(pout->header) free(pout->header);				\
-	if(in.header.length()) pout->header=strdup(in.header.c_str());	\
+	if(in.desc.length()) pout->header=strdup(in.desc.c_str());	\
     }
 
 cp2cpu_same(dmat,dzero,dnew,double)

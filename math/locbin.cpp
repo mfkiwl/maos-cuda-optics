@@ -106,8 +106,11 @@ void mapwritedata(file_t *fp, map_t *map){
    convert a dmat to map_t.
 */
 map_t* d2map(dmat *in){
-    map_t *map=myrealloc(dref(in), 1, map_t);
-    memset((char*)map+sizeof(dmat), 0, sizeof(map_t)-sizeof(dmat));
+    //map_t *map=new map_t(in->nx, in->ny, 0, 0, 0);
+    map_t *map=new map_t(*in);
+    //map->mmap=in->mmap;
+    //map_t *map=myrealloc(dref(in), 1, map_t);
+    //memset((char*)map+sizeof(dmat), 0, sizeof(map_t)-sizeof(dmat));
     char *header=in->header;
     map->iac=0;
     map->ox=search_header_num(header,"ox");
@@ -131,6 +134,7 @@ map_t* d2map(dmat *in){
     if(isnan(map->h)) map->h=0;
     if(isnan(map->vx)) map->vx=0;
     if(isnan(map->vy)) map->vy=0;
+
     return map;
 }
 
@@ -139,6 +143,7 @@ map_t* d2map(dmat *in){
  */
 mapcell *dcell2map(dcell *in){
     mapcell *map=(mapcell*)cellnew(in->nx, in->ny);
+    //map->mmap=in->mmap;
     for(long i=0; i<in->nx*in->ny; i++){
 	if(!in->p[i]->header && in->header){
 	    in->p[i]->header=strdup(in->header);
@@ -162,7 +167,7 @@ map_t *mapreaddata(file_t *fp, header_t *header){
 	dmat *in=dreaddata(fp, header);
 	map=d2map(in);
 	dfree(in);
-    }else if(iscell(&header->magic)){/*old format. */
+    }else if(magic_iscell(header->magic)){/*old format. */
 	dcell *in=dcellreaddata(fp, header);
 	if(fabs(in->p[0]->p[0]-in->p[0]->p[1])>1.e-14){
 	    error("Map should be square\n");
@@ -172,7 +177,9 @@ map_t *mapreaddata(file_t *fp, header_t *header){
 	map->ox=in->p[0]->p[2];
 	map->oy=in->p[0]->p[3];
 	map->h=in->p[0]->p[4];
-	dfree_keepdata(in->p[1]);
+	warning("Temporary solution: data leak\n");// Fix /todo.
+	in->p[1]=0;
+	//dfree_keepdata(in->p[1]);
 	dcellfree(in);
     }else{
 	error("Invalid format. magic=%u\n", header->magic);
@@ -185,8 +192,9 @@ map_t *mapreaddata(file_t *fp, header_t *header){
    convert a dmat to rmap_t.
 */
 rmap_t* d2rmap(dmat *in){
-    rmap_t *map=myrealloc(dref(in), 1, rmap_t);
-    memset((char*)map+sizeof(dmat), 0, sizeof(rmap_t)-sizeof(dmat));
+    //rmap_t *map=myrealloc(dref(in), 1, rmap_t);
+    //memset((char*)map+sizeof(dmat), 0, sizeof(rmap_t)-sizeof(dmat));
+    rmap_t *map=new rmap_t(in->nx, in->ny);
     char *header=in->header;
     if(!in->header){
 	error("this dmat has no header\n");

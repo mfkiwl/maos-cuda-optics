@@ -29,7 +29,7 @@
 psfout. No user modifiable entries.  */
 typedef struct zfarr zfarr;
 zfarr* zfarr_init(long nx, long ny, const char*format,...) CHECK_ARG(3);
-void zfarr_push(zfarr *ca, int i, const void *A);
+void zfarr_push(zfarr *ca, int i, const TwoDim *A);
 /*void zfarr_dcell(zfarr *ca, int i, const dcell *A);
 void zfarr_scell(zfarr *ca, int i, const scell *A);
 void zfarr_ccell(zfarr *ca, int i, const ccell *A);

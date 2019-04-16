@@ -1553,7 +1553,7 @@ T X(trapz)(const X(mat)*x, const X(mat)*y){
 */
 X(cell) *X(celldup)(const X(cell) *in){
     X(cell) *out=NULL;
-    X(cellcp)(&out, in);
+    X(cellcp)((TwoDim**)&out, in);
     return out;
 }
 
@@ -1703,7 +1703,7 @@ void X(celldropzero)(X(cell) *B, R thres){
 */
 R X(celldiff)(const X(cell) *A, const X(cell) *B){
     X(cell) *C=NULL;
-    X(cellcp)(&C,A);
+    X(cellcp)((TwoDim**)&C,A);
     X(celladd)(&C,1,B,-1);
     R d=sqrt(X(cellnorm)(C)*2/(X(cellnorm)(C)+X(cellnorm)(B)));
     return isnan(d)?0:d;

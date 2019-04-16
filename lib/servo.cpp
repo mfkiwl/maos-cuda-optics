@@ -464,7 +464,7 @@ servo_typeII_filter(SERVO_T *st, const dcell *merrc){
 	    mlead->p[imod] = e1a*mlead->p[imod]+gg*(1-e1a)/(1-e1)*(merr->p[imod]-e1*merrlast->p[imod]);
 	}
     }
-    dcellcp(&st->merrlast, merrc);
+    dcellcp((TwoDim**)&st->merrlast, merrc);
     dcelladd(&st->mpreint,1, st->mlead, 1);
 }
 static void servo_init(SERVO_T *st, const dcell *merr){
@@ -606,7 +606,7 @@ int servo_filter(SERVO_T *st, const dcell *_merr){
 	double g2=-st->ep->p[1];
 	dcelladd(&st->mpreint, 0, merr, g1);
 	dcelladd(&st->mpreint, 1, st->merrlast, g2);
-	dcellcp(&st->merrlast, merr);
+	dcellcp((TwoDim**)&st->merrlast, merr);
     }
 	break;
     case 3://type II
@@ -652,7 +652,7 @@ dmat* servo_test(dmat *input, double dt, int dtrat, dmat *sigma2n, dmat *gain){
 	    dzero(meas->p[0]);
 	}
 	dadd(&meas->p[0], 1, merr, 1);/*average the error. */
-	dcellcp(&mreal, st2t->mint->p[0]);
+	dcellcp((TwoDim**)&mreal, st2t->mint->p[0]);
 	if((istep+1) % dtrat == 0){
 	    if(dtrat!=1) dscale(meas->p[0], 1./dtrat);
 	    if(sigman){

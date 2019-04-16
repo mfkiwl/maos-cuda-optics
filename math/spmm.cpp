@@ -352,7 +352,7 @@ X(sp) *X(spmulsp)(const X(sp) *A, const X(sp) *B, const char trans[2]){
   for beta!=1 because for every call to dmm, the already accumulated ones are
   scaled.  removed beta.
 */
-void X(cellmm)(void *C0_, const void *A_, const void *B_, const char trans[2], const R alpha){
+void X(cellmm)(void *C0_, const TwoDim *A_, const TwoDim *B_, const char trans[2], const R alpha){
     if(!A_ || !B_) return;
     const cell *A=(const cell*)(A_);
     const cell *B=(const cell*)(B_);
@@ -410,13 +410,13 @@ void X(cellmm)(void *C0_, const void *A_, const void *B_, const char trans[2], c
     }
 }
 
-cell *X(cellmm2)(const void *A_, const void *B_, const char trans[2]){
+cell *X(cellmm2)(const TwoDim *A_, const TwoDim *B_, const char trans[2]){
     cell *res=0;
     X(cellmm)(&res, A_, B_, trans, 1);
     return res;
 }
 
-void X(celladdI)(void *A_, T alpha){
+void X(celladdI)(TwoDim *A_, T alpha){
     if(!A_) return;
     cell *A=cell_cast(A_);
     assert(A->nx==A->ny);
@@ -435,7 +435,7 @@ void X(celladdI)(void *A_, T alpha){
 /**
    Takes parameters of X(mat), X(sp), X(cell), X(spcell): A=A*ac+B*bc;
  */
-void X(celladd)(void *A_, R ac, const void *B_, R bc){
+void X(celladd)(void *A_, R ac, const TwoDim *B_, R bc){
     if(!A_ || !B_ || bc==0) return;
     cell *B=(cell*)(B_);
     cell **pA=(cell**)A_;
@@ -471,7 +471,7 @@ void X(celladd)(void *A_, R ac, const void *B_, R bc){
 /**
    Takes parameters of X(mat), X(sp), X(cell), X(spcell): Copy B to A;
  */
-void X(cellcp)(void *A_, const void *B_){
+void X(cellcp)(void *A_, const TwoDim *B_){
     if(!B_){
 	X(cellscale)(*((cell**)A_), 0);
     }else{
@@ -482,7 +482,7 @@ void X(cellcp)(void *A_, const void *B_){
 /**
    scale each element of A.
 */
-void X(cellscale)(void *A_, R w){
+void X(cellscale)(TwoDim *A_, R w){
     if(!A_) return;
     cell *A=(cell*)A_;
     if(iscell(A_)){
@@ -504,14 +504,14 @@ void X(cellscale)(void *A_, R w){
 /**
    setting all elements of a X(cell) to zero.
 */
-void X(cellzero)(void *dc){
+void X(cellzero)(TwoDim *dc){
     X(cellscale)(dc, 0);
 }
 
 /**
    Convert X(cell) or X(spcell) to X(mat)
 */
-X(mat)* X(cell2m)(const void *A_){
+X(mat)* X(cell2m)(const TwoDim *A_){
     if(!A_) return 0;
     cell *A=cell_cast(A_);
     long nx,ny,*nxs,*nys;

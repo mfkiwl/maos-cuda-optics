@@ -227,7 +227,7 @@ static void Tomo_prop_do(thread_t *info){
     const PARMS_T *parms=global->parms;
     SIM_T *simu=global->simu;
     const int nps=recon->npsr;
-    map_t xmap;/*make a temporary xmap for thread safety.*/
+    //map_t xmap;/*make a temporary xmap for thread safety.*/
     for(int iwfs=info->start; iwfs<info->end; iwfs++){
 	int ipowfs = parms->wfsr[iwfs].powfs;
 	if(parms->powfs[ipowfs].skip) continue;
@@ -249,8 +249,10 @@ static void Tomo_prop_do(thread_t *info){
 		}
 		double scale=1. - ht/hs;
 		if(scale<0) continue;
-		memcpy(&xmap, recon->xmap->p[ips], sizeof(map_t));
-		xmap.p=data->xin->p[ips]->p;
+		map_t xmap(*recon->xmap->p[ips]);
+		xmap.Replace(data->xin->p[ips]->p);
+		//memcpy(&xmap, recon->xmap->p[ips], sizeof(map_t));
+		//xmap.p=data->xin->p[ips]->p;
 		prop_grid_stat(&xmap, recon->ploc->stat, xx->p, 1, 
 			       displace[0],displace[1], scale, 0, 0, 0);
 	    }else{
@@ -323,15 +325,17 @@ static void Tomo_iprop_do(thread_t *info){
     const PARMS_T *parms=global->parms;
     SIM_T *simu=global->simu;
     const int nps=recon->npsr;
-    map_t xmap;
+    //map_t xmap;
     for(int ips=info->start; ips<info->end; ips++){
 	if(parms->tomo.square && !parms->dbg.tomo_hxw){
 	    /*Do the ray tracing instead of using HXW. */
 	    if(!data->xout->p[ips]){
 		data->xout->p[ips]=dnew(recon->xloc->p[ips]->nloc, 1);
 	    }
-	    memcpy(&xmap, recon->xmap->p[ips], sizeof(map_t));
-	    xmap.p=data->xout->p[ips]->p;
+	    //memcpy(&xmap, recon->xmap->p[ips], sizeof(map_t));
+	    //xmap.p=data->xout->p[ips]->p;
+	    map_t xmap(*recon->xmap->p[ips]);
+	    xmap.Replace(data->xout->p[ips]->p);
 	    double ht=recon->ht->p[ips];
 	    for(int iwfs=0; iwfs<parms->nwfsr; iwfs++){
 		if(!data->gg->p[iwfs]) continue;
@@ -628,7 +632,7 @@ void psfr_calc(SIM_T *simu, dcell *opdr, dcell *dmpsol, dcell *dmerr, dcell *dme
 	    if(parms->evl.psfr->p[ievl]){
 		dzero(xx);
 		if(opdr){
-		    map_t xmap;
+		    //map_t xmap;
 		    const int npsr=recon->npsr;
 		    /*First compute residual opd: Hx*x-Ha*a*/
 		    for(int ips=0; ips<npsr; ips++){
@@ -638,8 +642,10 @@ void psfr_calc(SIM_T *simu, dcell *opdr, dcell *dmpsol, dcell *dmerr, dcell *dme
 			double dispy=parms->evl.thetay->p[ievl]*ht;
 			if(scale<0) continue;
 			if(parms->tomo.square){/*square xloc */
-			    memcpy(&xmap, recon->xmap->p[ips], sizeof(map_t));
-			    xmap.p=opdr->p[ips]->p;
+			    map_t xmap(*recon->xmap->p[ips]);
+			    xmap.Replace(opdr->p[ips]->p);
+			    //memcpy(&xmap, recon->xmap->p[ips], sizeof(map_t));
+			    //xmap.p=opdr->p[ips]->p;
 			    prop_grid_stat(&xmap, locs->stat, xx->p, 1, 
 					   dispx, dispy, scale, 0, 0, 0);
 			}else{

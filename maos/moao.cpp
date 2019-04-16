@@ -150,9 +150,11 @@ moao_FitR(dcell **xout, const RECON_T *recon, const PARMS_T *parms, int imoao,
 	const double ht = parms->atmr.ht->p[ipsr];
 	double scale=1.-ht/hs;
 	if(parms->tomo.square){
-	    map_t map;
-	    memcpy(&map, recon->xmap->p[ipsr], sizeof(map_t));
-	    map.p=opdr->p[ipsr]->p;
+	    map_t map(*recon->xmap->p[ipsr]);
+	    map.Replace(opdr->p[ipsr]->p);
+	    //map_t map;
+	    //memcpy(&map, recon->xmap->p[ipsr], sizeof(map_t));
+	    //map.p=opdr->p[ipsr]->p;
 	    prop_grid_stat(&map, recon->floc->stat, 
 			   xp->p[0]->p, 1, 
 			   thetax*ht, thetay*ht,scale, 0, 0, 0);

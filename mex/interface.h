@@ -43,7 +43,7 @@ mxArray *loc2mx(const loc_t*loc){
 mxArray *dsp2mx(const dsp*A){
     if(!A) return mxCreateSparse(0, 0, 0, mxREAL);
     mxArray *out=0;
-    if(REFERENCE){
+#if REFERENCE
 	out=mxCreateSparse(0, 0, 0, mxREAL);
 	mxSetPr(out, A->x);
 	mxSetJc(out, (mwIndex*)A->p);
@@ -52,12 +52,12 @@ mxArray *dsp2mx(const dsp*A){
 	mxSetN(out, A->ny);
 	mxSetNzmax(out, A->nzmax);
 	if(A->nref) A->nref[0]++;
-    }else{
+#else
 	out=mxCreateSparse(A->nx,A->ny,A->nzmax,mxREAL);
 	memcpy(mxGetIr(out),A->i,A->nzmax*sizeof(long));
 	memcpy(mxGetJc(out),A->p,(A->ny+1)*sizeof(long));
 	memcpy(mxGetPr(out),A->x,A->nzmax*sizeof(double));
-    }
+#endif
     return out;
 }
 mxArray *csp2mx(const csp*A){
@@ -81,13 +81,16 @@ mxArray *csp2mx(const csp*A){
 mxArray *d2mx(const dmat *A){
     if(!A) return mxCreateDoubleMatrix(0,0,mxREAL);
     mxArray *out=0;
-    if(REFERENCE && !A->mmap && A->nref){
+#if REFERENCE
+    if(!A->mmap && A->RefCount()){
 	out=mxCreateDoubleMatrix(0,0,mxREAL);
 	mxSetPr(out, A->p);
 	mxSetM(out, A->nx);
 	mxSetN(out, A->ny);
 	if(A->nref) A->nref[0]++;
-    }else{
+    }else
+#endif
+    {
 	out=mxCreateDoubleMatrix(A->nx,A->ny,mxREAL);
 	memcpy(mxGetPr(out),A->p,A->nx*A->ny*sizeof(double));
     }
@@ -482,18 +485,18 @@ static __attribute__((constructor)) void init(){
     }
     quitfun=mex_quitfun;
 
-    if(REFERENCE){
-	extern int mem_debug;
-	mem_debug=1;
-	extern void *(*calloc_custom)(size_t, size_t);
-	extern void *(*malloc_custom)(size_t);
-	extern void *(*realloc_custom)(void *, size_t);
-	extern void  (*free_custom)(void *);
-	calloc_custom=calloc_mex;
-	malloc_custom=malloc_mex;
-	realloc_custom=realloc_mex;
-	free_custom=free_mex;
-    }
+#if REFERENCE
+    extern int mem_debug;
+    mem_debug=1;
+    extern void *(*calloc_custom)(size_t, size_t);
+    extern void *(*malloc_custom)(size_t);
+    extern void *(*realloc_custom)(void *, size_t);
+    extern void  (*free_custom)(void *);
+    calloc_custom=calloc_mex;
+    malloc_custom=malloc_mex;
+    realloc_custom=realloc_mex;
+    free_custom=free_mex;
+#endif
 }
 static __attribute__((destructor)) void deinit(){
     fprintf(stderr, "mex unloaded\n");

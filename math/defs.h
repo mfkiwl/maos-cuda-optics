@@ -158,17 +158,12 @@
 #else
 #define M_SPT M_SPT32
 #endif
-static inline int issp(const void *id){
-    const uint32_t magic=*((const uint32_t*)id);
-    return (magic==M_SPT);
+static inline int issp(const TwoDim *A){
+    return ID(A)==M_SPT;
 }
-
 #endif //if USE_LONG
 
 #define ABS2(A) creal((A)*conj(A))
-static inline int ismat(const void *id){
-    const uint32_t magic=*((const uint32_t*)id);
-    return (magic==M_T);
-}
+
 
 #endif //ifndef AOS_MATH_DEFS_H

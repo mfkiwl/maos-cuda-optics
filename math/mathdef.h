@@ -111,7 +111,7 @@ AOS_MATBIN_DEF(AOS_LMAT,long)
 
 #define cellfree(A) ({cellfree_do(A); A=0;})
 
-#define mapwrite(out, A...) write_by_id((void*)out, M_MAP64, A)
+#define mapwrite(out, A...) write_by_id(out, M_MAP64, A)
 #define mapread(A...)    (map_t*)read_by_id(M_MAP64, 0, A)
 #define mapcellread(A...) (mapcell*)read_by_id(M_MAP64, 1, A)
 #define mapcellnew (mapcell*)cellnew
@@ -120,7 +120,7 @@ AOS_MATBIN_DEF(AOS_LMAT,long)
 #define rmapcellnew (rmapcell*)cellnew
 #define rmapccellnew (rmapccell*)cellnew
     
-#define locwrite(out, A...) write_by_id((void*)out, M_LOC64, A)
+#define locwrite(out, A...) write_by_id(out, M_LOC64, A)
 #define locread(A...)    (loc_t*)read_by_id(M_LOC64, 0, A)
 #define loccellread(A...) (loccell*)read_by_id(M_LOC64, 1, A)
 #define loccellnew (loccell*)cellnew

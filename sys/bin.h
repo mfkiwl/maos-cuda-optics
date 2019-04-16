@@ -19,6 +19,7 @@
 #ifndef AOS_BIN_H_
 #define AOS_BIN_H_
 #include <sys/time.h>
+#include <sys/mman.h>
 #include <limits.h>
 #include <stdint.h>
 #include <pthread.h>
@@ -57,8 +58,8 @@
 #define M_MAP64     0x016402/*map_t, compatible with M_DBL*/
 #define M_RECTMAP64 0x026402/*map_t, compatible with M_DBL*/
 #define M_LOC64     0x036402/*loc_t with double data*/
-static inline int iscell(const void *id){
-    const uint32_t magic=*((const uint32_t*)id);
+
+static inline int magic_iscell(uint32_t magic){
     return (((magic)&0x6410)==0x6410 || ((magic)&0x6420) == 0x6420);
 }
 #if LONG_MAX==2147483647L //long is 32 bit
@@ -117,6 +118,62 @@ typedef struct {
     char *str;
 }header_t;
 /*
+  Describes the information about mmaped data. Don't unmap a segment of mmaped
+  memory, which causes the whole page to be unmapped. Instead, reference count
+  the mmaped file and unmap the segment when the nref dropes to 1.
+*/
+struct mmap_t{
+    int fd;   /**<file descriptor. close it if not -1.*/
+    void *p;  /**<points to the beginning of mmaped memory for this type of data.*/
+    long n;   /**<length of mmaped memory.*/
+    long *nref;/**<Number of reference.*/
+
+public:
+    /*mmap_t(int fdi, void*pi, long ni):fd(fdi),p(pi),n(ni){
+	nref=new long;
+	*nref=1;
+	}*/
+    void _deinit(){
+	if(nref){
+	    (*nref)--;
+	    if((*nref)<=0){
+		munmap(p, n);
+		if(fd!=-1) close(fd);
+		delete nref;
+	    }
+	}
+    }
+    mmap_t():fd(0),p(0),n(0),nref(0){}
+    void init(int fdi, void*pi, long ni){
+	fd=fdi;
+	p=pi;
+	n=ni;
+	nref=new long;
+	*nref=1;
+    }
+    mmap_t(const mmap_t &in):fd(in.fd),p(in.p),n(in.n),nref(in.nref){
+	if(nref) (*nref)++;
+    }
+    mmap_t& operator=(const mmap_t &in){
+	if(this!=&in){
+	    _deinit();
+	    fd=in.fd;
+	    p=in.p;
+	    n=in.n;
+	    nref=in.nref;
+	    if(nref) (*nref)++;
+	}
+	return *this;
+    }
+    ~mmap_t(){
+	_deinit();
+    }
+    operator bool(){
+	return p?1:0;
+    }
+};
+
+/*
   wrapping for standard and zlib functions that 
   open, close, write and read files, test end of file.
   Make the following function private so that other 
@@ -151,9 +208,6 @@ void writearr(const void *fpn, const int isfile, const size_t size, const uint32
 	      const char *header, const void *p, const uint64_t nx, const uint64_t ny);
 void writedbl(const double *p, long nx, long ny, const char* format,...) CHECK_ARG(4);
 void writeflt(const float *p, long nx, long ny, const char* format,...) CHECK_ARG(4);
-void mmap_unref(struct mmap_t *in);
-struct mmap_t *mmap_new(int fd, void *p, long n);
-mmap_t*mmap_ref(mmap_t *in);
 int mmap_open(char *fn, int rw);
 void mmap_header_rw(char **p0, char **header0, uint32_t magic, long nx, long ny, const char *header);
 void mmap_header_ro(char **p0, uint32_t *magic, long *nx, long *ny, char **header0);

@@ -49,9 +49,9 @@ X(mat)* X(new_mmap)(long nx, long ny, const char *header, const char *format, ..
     /*memset(map, 0, msize); */
     char *header0;
     mmap_header_rw(&map, &header0, M_T, nx, ny, header);
-    X(mat) *out=X(new_data)(nx, ny, (T*)map);
+    X(mat) *out=X(new_ref)(nx, ny, (T*)map);
     out->header=header0;
-    out->mmap=mmap_new(fd, map0, msize);
+    out->mmap.init(fd, map0, msize);
     return out;
 }
 /**
@@ -86,15 +86,15 @@ X(cell)* X(cellnew_mmap)(long nx, long ny, long *nnx, long *nny,
     char *header0;
     mmap_header_rw(&map, &header0, MCC_ANY, nx, ny, header1);
     X(cell) *out=X(cellnew)(nx,ny);
-    out->mmap=mmap_new(fd, map0, msize);
+    out->mmap.init(fd, map0, msize);
     out->header=header0;
     for(long ix=0; ix<nx*ny; ix++){
 	mmap_header_rw(&map, &header0, M_T, nnx[ix], nny[ix], header2?header2[ix]:NULL);
-	out->p[ix]=X(new_data)(nnx[ix], nny[ix], (T*)map);
+	out->p[ix]=X(new_ref)(nnx[ix], nny[ix], (T*)map);
 	memset(map, 0, nnx[ix]*nny[ix]*sizeof(T));//temporary
 	map+=nnx[ix]*nny[ix]*sizeof(T);
 	if(out->p[ix]) {
-	    out->p[ix]->mmap=mmap_ref(out->mmap);/*reference */
+	    out->p[ix]->mmap=(out->mmap);/*reference */
 	    out->p[ix]->header=header0;
 	}
     }
@@ -129,14 +129,14 @@ X(cell)* X(cellnewsame_mmap)(long nx, long ny, long mx, long my, const char *hea
     X(cell) *out=X(cellnew)(nx,ny);
     char *header0;
     mmap_header_rw(&map, &header0, MCC_ANY, nx, ny, header);
-    out->mmap=mmap_new(fd, map0, msize);
+    out->mmap.init(fd, map0, msize);
     out->header=header0;
     for(long ix=0; ix<nx*ny; ix++){
 	mmap_header_rw(&map, &header0, M_T, mx, my, NULL);
-	out->p[ix]=X(new_data)(mx, my, (T*)map);
+	out->p[ix]=X(new_ref)(mx, my, (T*)map);
 	map+=mx*my*sizeof(T);
 	if(out->p[ix]){
-	    out->p[ix]->mmap=mmap_ref(out->mmap);;
+	    out->p[ix]->mmap=(out->mmap);;
 	    out->p[ix]->header=header0;
 	}
     }
@@ -150,7 +150,7 @@ static X(mat*) X(readdata_mmap)(char **map){
     if(magic!=M_T){
 	error("File has magic %d, we want %d\n", (int)magic, M_T);
     }
-    X(mat)* out=X(new_data)(nx, ny, (T*)(*map));
+    X(mat)* out=X(new_ref)(nx, ny, (T*)(*map));
     *map+=nx*ny*sizeof(T);
     if(out){
 	out->header=header;
@@ -173,7 +173,7 @@ X(mat*) X(read_mmap)(const char *format, ...){
     char *map0=map;
     X(mat) *out=X(readdata_mmap)(&map);
     if(out){
-	out->mmap=mmap_new(fd, map0,msize);
+	out->mmap.init(fd, map0,msize);
     }
     return out;
 }
@@ -196,15 +196,15 @@ X(cell*) X(cellread_mmap)(const char *format, ...){
     uint32_t magic;
     char *header;
     mmap_header_ro(&map, &magic, &nx, &ny, &header);
-    if(!iscell(&magic)){
+    if(!magic_iscell(magic)){
 	error("We want a cell array, File has %x\n", (int)magic);
     }
     X(cell) *out=X(cellnew)(nx, ny);
-    out->mmap=mmap_new(fd, map0, msize);
+    out->mmap.init(fd, map0, msize);
     out->header=header;
     for(long ix=0; ix<nx*ny; ix++){
 	out->p[ix]=X(readdata_mmap)(&map);
-	out->p[ix]->mmap=mmap_ref(out->mmap);
+	out->p[ix]->mmap=(out->mmap);
     }
     return out;
 }

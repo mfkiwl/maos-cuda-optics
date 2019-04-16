@@ -19,6 +19,7 @@
 #ifndef AOS_MATH_TYPE_H
 #define AOS_MATH_TYPE_H
 #include "numtype.h"
+#include "array.h"
 /**
    \file type.h Defines the math data types like dmat, cmat, dcell, ccell,
    dsp, csp data types.
@@ -39,83 +40,89 @@ typedef enum CEMBED{
   may use the same pointer, but with different nx or ny
   partition. */
 
-#define ARR(T)						\
-    uint32_t id;   /**< to identify the array type. Must be the first element*/	\
-    T *restrict p; /**<The data pointer*/		\
-    long nx;       /**< number of rows */		\
-    long ny;       /**< number of columns */		\
-    char *header;  /**<The header*/			\
-    struct mmap_t *mmap;/**< not NULL if mmaped.*/	\
-    int *nref; /**< reference count */			\
-    struct fft_t *fft					
+template <typename T>
+class Sparse:public TwoDim{
+public:
+    T *restrict x;
+    spint *restrict p ;  /**< column pointers (size n+1) or col indices (size nzmax) when nz!=-1 */ 
+    spint *restrict i ;  /**< row indices, size nzmax */ 
+    char *header;
+    long nzmax;
+    long nz ;            /**< number of entries in triplet matrix, -1 for compressed-col */
+    int *nref;           /**< reference counting like dmat */ 
+public:
+    Sparse(long nxi=0, long nyi=1):TwoDim(nxi, nyi),x(0),p(0),i(0),header(0),nzmax(0),nz(0),nref(0){};
+};
 
-#define MATARR(T) struct{ \
-	ARR(T);		  \
+#define DefSparse(T, C)					\
+    class C: public Sparse<T>{				\
+    public:						\
+    C(long nxi=0, long nyi=1):Sparse<T>(nxi, nyi){};	\
     }
+/*typedef MATARR(double) dmat;//a double matrix object contains 2-d array of double numbers
+  typedef MATARR(float) smat;
+  typedef MATARR(dcomplex) cmat;
+  typedef MATARR(fcomplex) zmat;
+  typedef MATARR(long) lmat;
+*/
 
-#define CELLARR(T) struct{	      \
-	ARR(T);			      \
-	T m;/*store continuous data*/ \
-    }
+typedef Array<long>   lmat;
+typedef Array<double> dmat;
+typedef Array<float>  smat;
+typedef Array<dcomplex> cmat;
+typedef Array<fcomplex> zmat;
 
-#define SPMATARR(T) struct{						\
-	uint32_t id;/**<to identify the array type*/			\
-	T *restrict x;       /**< numerical values, size nzmax */	\
-	long nx;             /**< number of rows */		\
-	long ny;             /**< number of columns */		\
-	char *header;        /**<header*/				\
-	long nzmax ;         /**< maximum number of entries */		\
-        spint *restrict p ;  /**< column pointers (size n+1) or col indices (size nzmax) when nz!=-1 */ \
-	spint *restrict i ;  /**< row indices, size nzmax */		\
-	long nz ;            /**< number of entries in triplet matrix, -1 for compressed-col */ \
-	int *nref;           /**< reference counting like dmat */	\
-    }
-
-typedef MATARR(double) dmat;/*a double matrix object contains 2-d array of double numbers*/
-typedef MATARR(float) smat;
-typedef MATARR(dcomplex) cmat;
-typedef MATARR(fcomplex) zmat;
-typedef MATARR(long) lmat;
-
-typedef SPMATARR(double) dsp;
-typedef SPMATARR(float) ssp;
-typedef SPMATARR(dcomplex) csp;
-typedef SPMATARR(fcomplex) zsp;
-
-
+DefSparse(double, dsp);
+DefSparse(float, ssp);
+DefSparse(dcomplex, csp);
+DefSparse(fcomplex, zsp);
+#undef DefSparse
 
 /**
    OPD or Amplitude map defined on square/rectangular grids. with equal spacing
    on x/y. Can be casted to dmat
 */
-typedef struct map_t{
+class map_t:public Array<double>{
+    typedef Array<double> Parent;
     /*The OPD, takes the same form of dmat so can be casted. */
-    ARR(double);
-    double ox;      /**<Origin in x*/
-    double oy;      /**<Origin in y*/
+    //ARR(double);
+public:
     double dx;      /**<Sampling along x*/
     double dy;      /**<Sampling along y*/
+    double ox;      /**<Origin in x*/
+    double oy;      /**<Origin in y*/
     double h;       /**<Heigh conjugation of this surface*/
     double vx;      /**Wind velocity. Useful for atmospheric grid*/
     double vy;      /**Wind velocity. Useful for atmospheric grid*/
     double iac;     /**<Inter-actuator coupling. >0: use cubic influence function*/
-} map_t;
+public:
+    map_t(long nxi, long nyi, double dxi=1./64., double dyi=1./64., double *pi=0)
+	:Parent(nxi, nyi, pi, 1), dx(dxi), dy(dyi),ox(-nx/2*dx),oy(-ny/2*dy),h(0),vx(0),vy(0),iac(0){
+    }
+    map_t(Parent in):Parent(in), dx(1./64), dy(1./64), ox(-nx/2*dx), oy(-ny/2*dy), h(0), vx(0), vy(0), iac(0){}
+};
 
 /**
    Map with different x/y sampling. Can be cased to dmat
 */
-typedef struct rmap_t{
-    ARR(double);
-    double ox;      /**<Origin in x*/
-    double oy;      /**<Origin in y*/
+class rmap_t:public Array<double>{
+    typedef Array<double> Parent;
+public:
     double dx;      /**<Sampling along x (first dimension)*/
     double dy;      /**<Sampling along y (second dimension)*/
+    double ox;      /**<Origin in x*/
+    double oy;      /**<Origin in y*/
     double txdeg;   /**<the x tilt angle in degree wrt beam (90 is prep), */
     double tydeg;   /**<the y tilt angle in degree wrt beam (90 is prep), */
     double ftel;    /**<Effective focal length of the telescope*/
     double fexit;   /**<The distance between the exit pupil and the focus*/
     double fsurf;   /**<The distance between the tilted surface (M3) and the focus*/
-}rmap_t;
+public:
+    rmap_t(long nxi, long nyi, double dxi=1./64., double dyi=1./64., double *pi=0)
+	:Parent(nxi, nyi, pi, 1), dx(dxi), dy(dyi),ox(-nxi/2*dxi),oy(-nyi/2*dyi),
+	 txdeg(0),tydeg(0),ftel(0),fexit(0),fsurf(0){
+    }
+};
 
 /**
    Store starting x,y for each col
@@ -143,8 +150,7 @@ typedef struct locstat_t{
 /**
    Struct for coordinates like plocs, xloc, aloc etc.
 */
-typedef struct loc_t{
-    uint32_t id;
+typedef struct loc_t:public TwoDim{
     double *locx;  /**< x coordinates of each point*/
     double *locy;  /**< y coordinates of each point*/
     long   nloc;   /**< number of points*/
@@ -184,41 +190,66 @@ typedef struct pts_t{
     double dy;     /**<sampling of points in each subaperture. dy=dx normally required.*/
 }pts_t;
 
-typedef CELLARR(cmat*) ccell;
-typedef CELLARR(zmat*) zcell;
-typedef CELLARR(dmat*) dcell;
-typedef CELLARR(smat*) scell;
-typedef CELLARR(lmat*) lcell;
+//temporary; To be converted to Cell /todo.
+//class cell:public Array<cell*>{
+//public:
+//    Array<cell*> m;
+//};
 
-typedef CELLARR(dsp*) dspcell;
-typedef CELLARR(ssp*) sspcell;
-typedef CELLARR(csp*) cspcell;
-typedef CELLARR(zsp*) zspcell;
+//temporary; To be converted to Cell /todo.
+//Cannot use template here, otherwise functions using those needs explicit instantiation
 
-typedef CELLARR(ccell*) cccell;
-typedef CELLARR(zcell*) zccell;
-typedef CELLARR(dcell*) dccell;
-typedef CELLARR(scell*) sccell;
-typedef CELLARR(lcell*) iccell;
+#define PCell(T, C)					\
+    class C:public Array<T>{				\
+    public:						\
+    T m;						\
+    C(long nxi, long nyi):Array<T>(nxi, nyi),m(0){}	\
+    virtual ~C(){					\
+	for(long ii=0; ii<nx*ny; ii++){			\
+	    delete (*this)(ii);				\
+	}						\
+	delete m;					\
+    }							\
+    }
 
-typedef CELLARR(cccell*) ccccell;
-typedef CELLARR(zccell*) zcccell;
-typedef CELLARR(dccell*) dcccell;
-typedef CELLARR(sccell*) scccell;
-typedef CELLARR(iccell*) icccell;
+PCell(cell*, cell);
+PCell(cmat*, ccell);
+PCell(zmat*, zcell);
+PCell(dmat*, dcell);
+PCell(smat*, scell);
+PCell(lmat*, lcell);
 
-typedef CELLARR(map_t*) mapcell;
-typedef CELLARR(rmap_t*) rmapcell;
-typedef CELLARR(loc_t*) loccell;
+PCell(dsp*, dspcell);
+PCell(ssp*, sspcell);
+PCell(csp*, cspcell);
+PCell(zsp*, zspcell);
 
-typedef CELLARR(mapcell*) mapccell;
-typedef CELLARR(rmapcell*) rmapccell;
-typedef CELLARR(loccell*) locccell;
+PCell(ccell*, cccell);
+PCell(zcell*, zccell);
+PCell(dcell*, dccell);
+PCell(scell*, sccell);
+PCell(lcell*, iccell);
 
-typedef struct cell{
-    ARR(struct cell*);
-    struct cell *m;
-}cell;
+PCell(cccell*, ccccell);
+PCell(zccell*, zcccell);
+PCell(dccell*, dcccell);
+PCell(sccell*, scccell);
+PCell(iccell*, icccell);
+
+PCell(map_t*, mapcell);
+PCell(rmap_t*, rmapcell);
+PCell(loc_t*, loccell);
+
+PCell(mapcell*, mapccell);
+PCell(rmapcell*, rmapccell);
+PCell(loccell*, locccell);
+
+static inline uint32_t ID(const TwoDim *A){
+    return A->id;
+}
+static inline int iscell(const TwoDim *A){
+    return magic_iscell(ID(A));
+}
 #undef ARR
 #undef CELLARR
 #undef MATARR

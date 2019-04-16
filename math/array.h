@@ -18,9 +18,11 @@
 
 #ifndef AOS_MATH_ARRAY_H
 #define AOS_MATH_ARRAY_H
-
+#include <typeinfo>
+#include <cstddef>
+#include <string>
 #include "../sys/sys.h"
-
+#include "numtype.h"
 //Standard CPU memory. 
 template<typename T>
 class Cpu{
@@ -40,7 +42,35 @@ public:
     }
 };
 
-
+///Magic number denoting the data type. Specialized for each type.
+template <typename T>
+struct Magic{
+    enum { magic=MCC_ANY};
+};
+template <>
+struct Magic<double>{
+    enum { magic=M_DBL};
+};
+template <>
+struct Magic<float>{
+    enum { magic=M_FLT};
+};
+template <>
+struct Magic<dcomplex>{
+    enum { magic=M_CMP};
+};
+template <>
+struct Magic<fcomplex>{
+    enum { magic=M_ZMP};
+};
+template <>
+struct Magic<int>{//always 32 bit int
+    enum { magic=M_INT32};
+};
+template <>
+struct Magic<long int>{//always 64 bit int. long is not.
+    enum { magic=M_INT64};
+};
 
 /**
    RefP is a reference counting for pointers. 
@@ -66,10 +96,12 @@ private:
 	    delete[] p0;
 	    delete nref;
 	}
+	p0=0;
+	nref=0;
     }
 public:
     //Constructors and related
-    RefP():p(0),p0(0),nref(0){
+    RefP():p0(0),nref(0),p(0){
     }
     RefP(long n, T *pin=0, int own=1):p0((Dev<T>*)pin),nref(0){
 	if(n>0){
@@ -85,7 +117,7 @@ public:
 	p=(T*)p0;
     }
     //Create a new pointer with offset for p.
-    RefP(const RefP& pin, long offset=0):p0(pin.p0),p(pin.p+offset),nref(pin.nref){
+    RefP(const RefP& pin, long offset=0):p0(pin.p0),nref(pin.nref),p(pin.p+offset){
 	if(nref) atomicadd(nref, 1);
     }
     
@@ -104,17 +136,18 @@ public:
 	    p0=new Dev<T>[n];
 	    nref=new int;
 	    nref[0]=1;
-	}else{
-	    p0=0;
-	    nref=0;
 	}
 	p=(T*)p0;	
     }
     //Destructors and related
-    ~RefP(){
+    virtual ~RefP(){
 	_deinit();
     }
-    
+    //Replace vector
+    void Replace(T* pnew){
+	_deinit();
+	p=pnew;
+    }
     //Access operators
     //() operator
     T* operator()(){
@@ -145,13 +178,18 @@ public:
     const T* operator+(int i)const {
 	return p+i;
     }
+    long RefCount()const{
+	return nref?nref[0]:0;
+    }
 };
 class TwoDim{
-protected:
+public://temporary. for backward compatibility before conversion is done. /todo
+    uint32_t id;
+public://temporary. Change to protected after conversion is done. /todo
     long nx;
     long ny;
 public:
-    TwoDim(long nxi, long nyi):nx(nxi), ny(nyi){}
+    TwoDim(long nxi=0, long nyi=1):nx(nxi), ny(nyi){}
     long Nx()const{
 	return nx;
     }
@@ -175,7 +213,12 @@ template <typename T, template<typename> class Dev=Cpu>
 class Array:public TwoDim, public RefP<T, Dev>{
     typedef RefP<T, Dev> RefPT;
 public:
-    string header;
+    std::string desc;
+public: //temporary for backward compatibility before conversion is done. /todo
+    mmap_t mmap;/**< not NULL if mmaped.*/ 
+    struct fft_t *fft;
+    char *header; //temporary for backward compatibility. Convert to desc. /todo
+public:
     using RefPT::operator();
     using RefPT::p;
     
@@ -200,36 +243,68 @@ public:
 	ny=nyi;
 	RefPT::init(nxi*nyi);
     }
+    virtual ~Array(){
+	if(!mmap) free(header);
+    }
     //Constructors 
     explicit Array(long nxi=0, long nyi=1, T *pi=NULL, int own=1)
 	:TwoDim(nxi, nyi),RefPT(nxi*nyi, pi, own){
+	fft=0;
+	header=0;
+	id=Magic<T>::magic;
     }
     //Create a reference with offset.
     Array(long nxi,long nyi,const RefPT& pi,long offset=0)
 	:TwoDim(nxi, nyi),RefPT(pi,offset){
+	fft=0;
+	header=0;
+	id=Magic<T>::magic;
+    }
+    //Copy constructor
+    Array(const Array &in):TwoDim(in),RefPT(in),desc(in.desc),mmap(in.mmap){
+	fft=0;
+	header=0;
+	id=Magic<T>::magic;
     }
     //Use default destructor
-
-    Array(const Array &in):TwoDim(in),RefPT(in),header(in.header){
-    }
+    //Copy assignment operator
     Array &operator=(const Array &in){
 	if(this!=&in){
 	    RefPT::operator=(in);
 	    nx=in.nx;
 	    ny=in.ny;
-	    header=in.header;
+	    desc=in.desc;
+	    mmap=in.mmap;
 	}
 	return *this;
     }
- 
+    //Convert matrix into Vector
     Array Vector(){
 	Array tmp=*this;
 	tmp.nx=tmp.nx*tmp.ny;
 	tmp.ny=1;
 	return tmp;
     }
+    //Resize array in place
+    void Resize(long nxi, long nyi){
+	Array B(nxi, nyi);
+	for(long iy=0; iy<MIN(nyi, Ny()); iy++){
+	    for(long ix=0; ix<MIN(nxi, Nx()); ix++){
+		B(ix, iy)=(*this)(ix, iy);
+	    }
+	}
+	*this=B;
+    }
+    //Replace underlining vector
+    void Replace(T* pnew){
+	RefPT::Replace(pnew);
+    }
 };
 
+template <typename T, template<class> class Dev>
+struct Magic<Array<T, Dev> >{
+    enum { magic=MCC_ANY};
+};
 
 /**
    Cell is a special Array that can stores multiple Arrays of data in continuous

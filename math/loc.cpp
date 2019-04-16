@@ -71,7 +71,7 @@ void locfree_do(loc_t *loc){
 	free(loc->locy);
 	free(loc->nref);
     }
-    free(loc);
+    delete(loc);
 }
 
 /**
@@ -88,7 +88,8 @@ void locarrfree_do(loc_t **loc, int nloc){
    Free map_t data
 */
 void mapfree_do(map_t *map){
-    dfree_do((dmat*)map, 0);
+    //dfree_do((dmat*)map, 0);
+    delete map;
 }
 
 /**
@@ -106,13 +107,14 @@ void maparrfree_do(map_t **map, int nmap){
    Free rmap_t data
 */
 void rmapfree_do(rmap_t *map){
-    dfree_do((dmat*)map, 0);
+    //dfree_do((dmat*)map, 0);
+    delete map;
 }
 /**
    Create a loc with nloc elements.
 */
 loc_t *locnew(long nloc,double dx, double dy){
-    loc_t *loc=mycalloc(1,loc_t);
+    loc_t *loc=new loc_t;
     loc->id=M_LOC64;
     loc->locx=mycalloc(nloc,double);
     loc->locy=mycalloc(nloc,double);
@@ -126,7 +128,7 @@ loc_t *locnew(long nloc,double dx, double dy){
    Reference an existing loc
  */
 loc_t *locref(const loc_t *in){
-    loc_t *out=mycalloc(1, loc_t);
+    loc_t *out=new loc_t;
     memcpy(out, in, sizeof(loc_t));
     if(out->nref){
 	atomicadd(out->nref, 1);
@@ -1394,27 +1396,21 @@ void locresize(loc_t *loc, long nloc){
    create a new map_t object.
 */
 map_t *mapnew(long nx, long ny, double dx, double dy, double *p){
-    map_t *map=(map_t*)realloc(dnew_data(nx, ny, p),sizeof(map_t));
-    map->h=0;
-    map->dx=dx;
-    map->dy=dy;
-    map->ox=-map->nx/2*map->dx;
-    map->oy=-map->ny/2*map->dy;
-    map->vx=0;
-    map->vy=0;
-    map->iac=0;
-    return map;
+    //map_t *map=(map_t*)realloc(dnew_data(nx, ny, p),sizeof(map_t));
+    return new map_t(nx, ny, dx, dy, p);
 }
 /**
    ceate a new map_t object from existing one. P is left empty.
 */
 map_t *mapnew2(map_t* A){
-    map_t *map=(map_t*)realloc(dnew_data(A->nx, A->ny, NULL),sizeof(map_t));
-    map->h=A->h;
-    map->dx=A->dx;
-    map->dy=A->dy;
+    if(!A) return NULL;
+    map_t *map=new map_t(A->nx, A->ny, A->dx, A->dy, 0);
+    //map_t *map=(map_t*)realloc(dnew_data(A->nx, A->ny, NULL),sizeof(map_t));
+    /*map->dx=A->dx;
+      map->dy=A->dy;*/
     map->ox=A->ox;
     map->oy=A->oy;
+    map->h=A->h;
     map->vx=A->vx;
     map->vy=A->vy;
     map->iac=A->iac;
@@ -1422,6 +1418,9 @@ map_t *mapnew2(map_t* A){
 }
 map_t *mapref(map_t*in){
     if(!in) return NULL;
+    else return new map_t(*in);
+
+/*
     map_t *out=mycalloc(1,map_t);
     memcpy(out,in,sizeof(map_t));
     if(!in->nref){
@@ -1432,7 +1431,7 @@ map_t *mapref(map_t*in){
     }else{
 	atomicadd(in->nref, 1);
     }
-    return out;
+    return out;*/
 }
 /**
    Create a circular aperture on map_t.

@@ -514,7 +514,7 @@ long setup_star_read_ztilt(STAR_S *star, int nstar, const PARMS_S *parms, int se
 			header_t header={0,0,0,0};
 			read_header(&header, fp_ztilt);
 			
-			if(iscell(&header.magic)){
+			if(magic_iscell(header.magic)){
 			    // error("expected data type: %u, got %u\n",(uint32_t)MCC_ANY, header.magic);
 			    nstep=header.nx;
 			    free(header.str);
@@ -627,7 +627,7 @@ long setup_star_read_wvf(STAR_S *star, int nstar, const PARMS_S *parms, int seed
 			file_t *fp_wvf=zfopen(fnwvf[iy][ix],"rb");
 			header_t header={0,0,0,0};
 			read_header(&header, fp_wvf);
-			if(!iscell(&header.magic)){
+			if(!magic_iscell(header.magic)){
 			    error("expected data type: %u, got %u\n",(uint32_t)MCC_ANY, header.magic);
 			}
 			nstep=header.nx;

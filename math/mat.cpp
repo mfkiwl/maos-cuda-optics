@@ -22,18 +22,22 @@
 #include "mathdef.h"
 #include "defs.h"/*Defines T, X, etc */
 //Check for correct type and for possible memory corruption
+inline int ismat(const TwoDim *A){
+    return ID(A)==M_T;
+}
 #define assert_mat(A) assert(!A || ismat(A))
 /**
    The only function that actually creats the matrix object. It ensures that all
    fields are properly initialized. If p is NULL, memory is allocated. If ref is
    true, p is treated as external resource and is not reference counted.
 */
-X(mat) *X(new_do)(long nx, long ny, T *p, int foreign){
+/*
+static X(mat) *X(new_do)(long nx, long ny, T *p, int foreign){
     X(mat) *out=mycalloc(1,X(mat));
     out->id=M_T;
     out->nx=nx;
     out->ny=ny;
-    if(foreign){/*the data does not belong to us. */
+    if(foreign){//the data does not belong to us. 
 	if(!p){
 	    error("When foreign is 1, p must not be NULL.\n");
 	}
@@ -47,13 +51,14 @@ X(mat) *X(new_do)(long nx, long ny, T *p, int foreign){
 	out->nref[0]=1;
     }
     return out;
-}
+}*/
 /**
    Creat a X(mat) object to reference an already existing vector.  Free the
    X(mat) object won't free the existing vector.
 */
 X(mat) *X(new_ref)(long nx, long ny, T *p){
-    return X(new_do)(nx,ny,p,1);
+    //return X(new_do)(nx,ny,p,1);
+    return new X(mat)(nx, ny, p, 0);
 }
 
 /**
@@ -61,14 +66,16 @@ X(mat) *X(new_ref)(long nx, long ny, T *p){
    freed when the X(mat) is freed.
 */
 X(mat) *X(new_data)(long nx, long ny, T *p){
-    return X(new_do)(nx,ny,p,0);
+    //return X(new_do)(nx,ny,p,0);
+    return new X(mat)(nx, ny, p, 1);
 }
 
 /**
    Create a new T matrix object. initialized all to zero.
 */
 X(mat) *X(new)(long nx, long ny){
-    return X(new_do)(nx,ny,NULL,0);
+    //return X(new_do)(nx,ny,NULL,0);
+    return new X(mat)(nx, ny);
 }
 /**
    check the size of matrix if exist. Otherwise create it.
@@ -87,7 +94,7 @@ void X(init)(X(mat)**A, long nx, long ny){
 /**
    cast a cell object to X(mat)
  */
-X(mat) *X(mat_cast)(const void *A){
+X(mat) *X(mat_cast)(const TwoDim *A){
     if(!A) return 0;
     assert(ismat(A));
     return (X(mat)*)A;
@@ -96,6 +103,9 @@ X(mat) *X(mat_cast)(const void *A){
    free a X(mat) object. if keepdata!=0, will not free A->p.
 */
 void X(free_do)(X(mat) *A, int keepdata){
+    if(keepdata) error("Invalid option");//temporary: delete keepdata /todo.
+    delete A;
+/*
     if(!A) return;
     assert_mat(A);
     int free_extra=0;
@@ -103,7 +113,7 @@ void X(free_do)(X(mat) *A, int keepdata){
 	int nref=atomicadd(A->nref, -1);
 	if(!nref){
 	    if(!keepdata){
-		if(A->mmap){/*data is mmap'ed. */
+		if(A->mmap){//data is mmap'ed. 
 		    mmap_unref(A->mmap);
 		}else{
 		    free_extra=1;
@@ -123,22 +133,24 @@ void X(free_do)(X(mat) *A, int keepdata){
 #endif
 	free(A->header);
     }
-    free(A);
+    free(A);*/
+
 }
 
 /**
    Free the X(mat), but keep the data.
 */
-void X(free_keepdata)(X(mat) *A){
+/*void X(free_keepdata)(X(mat) *A){
     X(free_do)(A,1);
-}
+    }*/
 
 /**
    creat a X(mat) reference an existing X(mat). Use the reference carefully.
 */
 X(mat) *X(ref)(const X(mat) *in){
     if(!in) return NULL;
-    assert_mat(in);
+    return new X(mat)(*in);
+    /*assert_mat(in);
     X(mat) *out=mycalloc(1,X(mat));
     memcpy(out,in,sizeof(X(mat)));
     if(!in->nref){
@@ -149,7 +161,7 @@ X(mat) *X(ref)(const X(mat) *in){
     }else{
 	atomicadd(in->nref, 1);
     }
-    return out;
+    return out;*/
 }
 /**
    create an new X(mat) reference another with different shape.
@@ -200,6 +212,8 @@ X(mat) *X(sub)(const X(mat) *in, long sx, long nx, long sy, long ny){
    possible.
 */
 void X(resize)(X(mat) *A, long nx, long ny){
+    A->Resize(nx, ny);
+    /*
     assert_mat(A);
     if(!A->nref || A->nref[0]>1){
 	error("Resizing a referenced vector\n");
@@ -211,7 +225,7 @@ void X(resize)(X(mat) *A, long nx, long ny){
 	if(nx*ny>A->nx*A->ny){
 	    memset(A->p+A->nx*A->ny, 0, (nx*ny-A->nx*A->ny)*sizeof(T));
 	}
-    }else{/*copy memory to preserve data*/
+    }else{//copy memory to preserve data
 	T *p=mycalloc(nx*ny,T);
 	long minx=A->nx<nx?A->nx:nx;
 	long miny=A->ny<ny?A->ny:ny;
@@ -222,7 +236,7 @@ void X(resize)(X(mat) *A, long nx, long ny){
 	A->p=p;
     }
     A->nx=nx;
-    A->ny=ny;
+    A->ny=ny;*/
 }
 
 /**
@@ -619,7 +633,7 @@ void X(shift)(X(mat) **B0, const X(mat) *A, int sx, int sy){
 /**
    cast a cell object to X(cell) after checking.
  */
-X(cell) *X(cell_cast)(const void *A_){
+X(cell) *X(cell_cast)(const TwoDim *A_){
     if(!A_) return 0;
     cell *A=(cell*)A_;
     assert(iscell(A));

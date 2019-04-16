@@ -68,7 +68,7 @@ static inline int wrap(long index, long n){
 
 #if defined(__cplusplus)
 //When including by CUDA, all definitions are already available.
-#ifndef AOS_CUDA_GPU_H
+//#ifndef AOS_CUDA_GPU_H
 //C++ mode
 //#include <complex>
 //#include <cmath>
@@ -145,7 +145,7 @@ static inline double real(double A){
     return A;
 }
 
-#endif//#ifndef AOS_CUDA_GPU_H
+//#endif//#ifndef AOS_CUDA_GPU_H
 #else //#if defined(__cplusplus) C99 mode
 #include <tgmath.h> //never include tgmath.h in CUDA included headers.
 typedef __complex__ double dcomplex;

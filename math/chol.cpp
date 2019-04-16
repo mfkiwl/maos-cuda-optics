@@ -249,7 +249,7 @@ spchol *chol_read(const char *format, ...){
     file_t *fp=zfopen(fn, "rb");
     header_t header={0,0,0,0};
     read_header(&header, fp);
-    if(!iscell(&header.magic)){
+    if(!magic_iscell(header.magic)){
 	error("%s does not contain cell array\n", fn);
     }
     long ncx=header.nx;

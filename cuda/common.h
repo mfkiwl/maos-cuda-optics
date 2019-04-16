@@ -28,8 +28,8 @@
 #include <cuComplex.h>
 #include <cuda_profiler_api.h>
 
-typedef double2 dcomplex;
-typedef float2 fcomplex;
+//typedef double2 dcomplex;
+//typedef float2 fcomplex;
 #include "gpu.h"
 #define NG1D 128
 #define NG2D 8
