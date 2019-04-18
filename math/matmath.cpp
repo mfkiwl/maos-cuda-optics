@@ -211,7 +211,7 @@ void X(cwm3)(X(mat) *restrict A, const X(mat) *restrict W,
 void X(cwmcol)(X(mat) *restrict A, const X(mat) *restrict B){
     if (!B) return;
     assert(A->nx==B->nx && B->ny==1);
-    T *B1=B->p;
+    const T *B1=B->p;
     for(long iy=0; iy<A->ny; iy++){
 	for(long ix=0; ix<A->nx; ix++){
 	    P(A,ix,iy)*=B1[ix];
@@ -267,8 +267,8 @@ void X(cwm3col)(X(mat) *restrict A,const X(mat) *restrict W,
 	int has_b2=B2 && fabs(wt2)>EPS;
 	if(has_b1 && has_b2){
 	    assert(A->nx*A->ny==W->nx*W->ny && A->nx==B1->nx && A->nx==B2->nx && B1->ny==1 && B2->ny==1);
-	    T *B1p=B1->p;
-	    T *B2p=B2->p;
+	    const T *B1p=B1->p;
+	    const T *B2p=B2->p;
 	    for(long iy=0; iy<A->ny; iy++){
 		for(long ix=0; ix<A->nx; ix++){
 		    P(A,ix,iy)=P(A,ix,iy)*P(W,ix,iy)*(B1p[ix]*wt1+B2p[ix]*wt2);
@@ -276,7 +276,7 @@ void X(cwm3col)(X(mat) *restrict A,const X(mat) *restrict W,
 	    }
 	}else if(has_b1){
 	    assert(A->nx*A->ny==W->nx*W->ny && A->nx==B1->nx && B1->ny==1);
-	    T *B1p=B1->p;
+	    const T *B1p=B1->p;
 
 	    for(long iy=0; iy<A->ny; iy++){
 		for(long ix=0; ix<A->nx; ix++){
@@ -294,7 +294,7 @@ void X(cwm3col)(X(mat) *restrict A,const X(mat) *restrict W,
 */
 void X(cwmrow)(X(mat) *restrict A, const X(mat) *restrict B){
     if(!A || !B) return;
-    T *B1=B->p;
+    const T *B1=B->p;
     assert(A->ny==B->nx && B->ny==1);
     for(long iy=0; iy<A->ny; iy++){
 	T junk=B1[iy];
@@ -1346,7 +1346,7 @@ void X(embed)(X(mat) *restrict A, const X(mat) *restrict B, const R theta){
 	}
 	for(long iy=iystart; iy<iyend; iy++){
 	    T *outi=PP(A,skipx+ixstart,skipy+iy);
-	    T *ini =PP(B,ixstart,iy);
+	    const T *ini =PP(B,ixstart,iy);
 	    memcpy(outi, ini, sizeof(T)*(ixend-ixstart));
 	}
     }else{
@@ -1522,8 +1522,8 @@ T X(trapz)(const X(mat)*x, const X(mat)*y){
     }
     T out=0;
     for(long icol=0; icol<y->ny; icol++){
-	T *py=PCOL(y, icol);
-	T *px=0;
+	const T *py=PCOL(y, icol);
+	const T *px=0;
 	if(x){
 	    if(x->ny==y->ny){
 		px=PCOL(x, icol);

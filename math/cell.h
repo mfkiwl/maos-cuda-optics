@@ -25,8 +25,8 @@
 #ifndef AOS_LIB_CELL_H
 #define AOS_LIB_CELL_H
 #include "type.h"
-cell* cellnew(long nx, long ny)CHECK_UNUSED_RESULT;
-cell* cellnew2(const TwoDim *)CHECK_UNUSED_RESULT;
+cell* cellnew(long nx, long ny) CHECK_UNUSED_RESULT;
+cell* cellnew2(const TwoDim *) CHECK_UNUSED_RESULT;
 cell* cell_cast(const TwoDim *A) CHECK_UNUSED_RESULT;
 void cellinit(cell **A, long nx, long ny);
 void cellinit2(cell **A, const cell *B);

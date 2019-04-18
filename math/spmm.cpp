@@ -23,7 +23,7 @@ typedef struct mm_t{
 /*
   determine parameters to perform for loop based on trans
 */
-static mm_t parse_trans(const cell *A, const cell *B, const char trans[2]){
+static mm_t parse_trans(const TwoDim *A, const TwoDim *B, const char trans[2]){
     int ax, az;
     int nx,ny,nz;
     int bz, by;
@@ -129,7 +129,7 @@ void X(spmulvec)(T *restrict y, const X(sp) *A, const T * restrict x, char trans
 */
 static void X(spmm_do)(X(mat) **yout, const X(sp) *A, const X(mat) *x, const char trans[2], const int transy, const T alpha){
     if(!A || !x) return;
-    mm_t D=parse_trans((cell*)A, (cell*)x, trans);
+    mm_t D=parse_trans(A, x, trans);
     if(transy){
 	X(init)(yout, D.ny, D.nx);
     }else{
@@ -352,12 +352,16 @@ X(sp) *X(spmulsp)(const X(sp) *A, const X(sp) *B, const char trans[2]){
   for beta!=1 because for every call to dmm, the already accumulated ones are
   scaled.  removed beta.
 */
-void X(cellmm)(void *C0_, const TwoDim *A_, const TwoDim *B_, const char trans[2], const R alpha){
-    if(!A_ || !B_) return;
-    const cell *A=(const cell*)(A_);
-    const cell *B=(const cell*)(B_);
+
+//X(cellmm)(X(cell)**C0_
+
+void X(cellmm)(void *C0_, const TwoDim *A, const TwoDim *B, const char trans[2], const R alpha){
+    if(!A || !B) return;
+   
     cell **C0=(cell**)C0_;
     if(iscell(A) && iscell(B)){
+	const cell *A2=dynamic_cast<const cell*>(A);
+	const cell *B2=dynamic_cast<const cell*>(B);
 	//multiplication of cells.
 	mm_t D=parse_trans(A, B, trans);
 	cellinit(C0, D.nx, D.ny);
@@ -368,7 +372,7 @@ void X(cellmm)(void *C0_, const TwoDim *A_, const TwoDim *B_, const char trans[2
 #pragma omp task firstprivate(ix,iy) if(D.nx*D.ny>1 && omp_in_parallel())
 #endif*/
 		for(int iz=0; iz<D.nz; iz++){
-		    X(cellmm)(C->p+ix+iy*D.nx, A->p[ix*D.ax+iz*D.az], B->p[iz*D.bz+iy*D.by], trans, alpha);
+		    X(cellmm)(C->p+ix+iy*D.nx, A2->p[ix*D.ax+iz*D.az], B2->p[iz*D.bz+iy*D.by], trans, alpha);
 		}
 /*#if _OPENMP >= 200805
 #pragma omp taskwait
@@ -435,15 +439,15 @@ void X(celladdI)(TwoDim *A_, T alpha){
 /**
    Takes parameters of X(mat), X(sp), X(cell), X(spcell): A=A*ac+B*bc;
  */
-void X(celladd)(void *A_, R ac, const TwoDim *B_, R bc){
-    if(!A_ || !B_ || bc==0) return;
-    cell *B=(cell*)(B_);
+void X(celladd)(void *A_, R ac, const TwoDim *B, R bc){
+    if(!A_ || !B || bc==0) return;
     cell **pA=(cell**)A_;
     if(iscell(B)){//cell
-	cellinit2(pA, B);
+	const cell *B2=dynamic_cast<const cell*>(B);
+	cellinit2(pA, B2);
 	cell *A=*pA;
 	for(int i=0; i<B->nx*B->ny; i++){
-	    X(celladd)(A->p+i, ac, B->p[i], bc);
+	    X(celladd)(A->p+i, ac, B2->p[i], bc);
 	}
     }else{//non cell
 	if(!*pA || ismat(*pA)){//A is dense
@@ -459,7 +463,6 @@ void X(celladd)(void *A_, R ac, const TwoDim *B_, R bc){
 	    if(issp(B)){//add sparse to sparse
 		X(sp)* tmp=X(spadd2)((X(sp)*)(*pA), ac, (X(sp)*)B, bc);
 		X(spmove)((X(sp)*)(*pA), (X(sp)*)tmp);
-		free(tmp);
 	    }else{
 		error("Adding dense to sparse matrix is not allowed.\n");
 	    }
@@ -482,12 +485,12 @@ void X(cellcp)(void *A_, const TwoDim *B_){
 /**
    scale each element of A.
 */
-void X(cellscale)(TwoDim *A_, R w){
-    if(!A_) return;
-    cell *A=(cell*)A_;
-    if(iscell(A_)){
+void X(cellscale)(TwoDim *A, R w){
+    if(!A) return;
+    if(iscell(A)){
+	cell *A2=dynamic_cast<cell*>(A);
 	for(int i=0; i<A->nx*A->ny; i++){
-	    X(cellscale)(A->p[i],w);
+	    X(cellscale)(A2->p[i],w);
 	}
     }else{
 	if(ismat(A)){

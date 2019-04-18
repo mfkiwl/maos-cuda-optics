@@ -1580,7 +1580,7 @@ void free_recon(const PARMS_T *parms, RECON_T *recon){
     locfree(recon->floc); 
     locfree(recon->ploc);
     cellfree(recon->ploc_tel);
-    free(recon->amap->p);free(recon->amap);//data is referenced
+    cellfree(recon->amap);
     cellfree(recon->acmap);
     cellfree(recon->aloc);
     cellfree(recon->actstuck);

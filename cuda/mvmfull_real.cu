@@ -266,7 +266,7 @@ void mvmfull_real(int *gpus, int ngpu, int nstep){
 	cp2gpu(data[igpu]->cumvm1, mvm);
 	data[igpu]->pix=Array<short,Gpu>(totpix, 1);
 	data[igpu]->pixbias=Array<short,Gpu>(totpix, 1);
-	cp2gpu(data[igpu]->pixbias(), (short*)pixbias->p, totpix*sizeof(short), cudaMemcpyHostToDevice);
+	cp2gpu(data[igpu]->pixbias(), (short*)pixbias->p(), totpix*sizeof(short), cudaMemcpyHostToDevice);
 	data[igpu]->mtch=curcell(nbuf, 1, totpix*2,1);
 	cp2gpu(data[igpu]->mtch[0], mtch);
 	data[igpu]->grad=curmat(ng, 1);
@@ -359,7 +359,7 @@ void mvmfull_real(int *gpus, int ngpu, int nstep){
 		nsaleft=sastep;
 	    }
 	    //One stream handling the memcpy
-	    short *pcur=(short*)(pix->p)+saind[isa];
+	    short *pcur=(short*)(pix->p())+saind[isa];
 	    if(sock!=-1){
 		double tmp0=myclockd();
 		if(stread(sock, pcur, sizeof(short)*npixleft)){

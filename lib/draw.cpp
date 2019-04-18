@@ -24,7 +24,7 @@
 #include "../math/mathdef.h"
 #include "draw.h"
 int DRAW_ID=0;
-int DRAW_DIRECT=1;
+int DRAW_DIRECT=0;
 int disable_draw=0; /*if 1, draw will be disabled  */
 PNEW(lock);
 #define MAXDRAW 1024

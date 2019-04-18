@@ -180,7 +180,7 @@ OPTS=
 COMMON_ICC="-wd1478 " #unknown paragmas
 #COMMON_ICC+=" -wd193 -wd1418 -wd2259 -wd1372 -wd981 -wd1292 -wd10237 -wd858 -wd1786 -wd3180 "
 #COMMON_ICC+=" -wd308 -wd373" #complex number
-COMMON_ICC+=" -diag-disable remark -qopt-report=3"
+COMMON_ICC+=" -diag-disable remark -qopt-report=2 -qopt-report-phase=vec,loop"
 COMMON_GCC="-Wno-deprecated-declarations -fms-extensions -static-libgcc"
 COMMON_CLANG="-Wno-deprecated-declarations -Qunused-arguments "
 COMMON_ALL=""
@@ -920,7 +920,7 @@ if test "$with_cuda" != "no" ;then
     CCBINOPT="$OPTScommon $OPTSprof $OPTSextra -fPIC $CXXFLAGS -Wno-unused-parameter"
     CCBINOPT="${CCBINOPT/-fpermissive/}"
     if test "$cudaver" -lt 100;then
-	CUDA_CXX11=0 #Enable C++11 mode emits cc1 warning for version <10.0
+	CUDA_CXX11=1 #Enable C++11 mode emits cc1 warning for version <10.0
     else
 	CUDA_CXX11=1
     fi

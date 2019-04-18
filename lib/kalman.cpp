@@ -193,7 +193,7 @@ static void sde_scale_coeff(dmat *coeff, double var_in, dmat *psdcov_sde, const 
    Fit a PSD with SDE model. Use initial guess from coeff0 and return final
    answer in the same format.
 */
-static dmat* sde_fit_do(const dmat *psdin, const dmat *coeff0, double tmax_fit){
+static dmat* sde_fit_do(dmat *psdin, const dmat *coeff0, double tmax_fit){
     if(psdin->ny!=2){
 	error("psd must contain nu and psd\n");
     }
@@ -296,7 +296,7 @@ static double sde_vib_est(double c1, double c2){
 /**
    If coeff0 is not null, use it immediately, otherwise, do vibration identification
  */
-dmat* sde_fit(const dmat *psdin, const dmat *coeff0, double tmax_fit, int vibid){
+dmat* sde_fit(dmat *psdin, const dmat *coeff0, double tmax_fit, int vibid){
     if (coeff0){
 	return sde_fit_do(psdin, coeff0, tmax_fit);
     }else{
@@ -470,7 +470,7 @@ kalman_t* sde_kalman(const dmat *coeff, /**<SDE coefficients*/
     dmat *Sigma_ep=dnew(nmod, nmod);
     dmat *Pd0=dnew(nblock, nmod);//Project from state vector to state.
     for(int iblock=0; iblock<nblock; iblock++){
-	double *pcoeff=coeff->p+(order+1)*iblock;
+	const double *pcoeff=coeff->p+(order+1)*iblock;
 	double *Aci=Ac->p+iblock*order*(nmod+1);
 	double *si=Sigma_ep->p+iblock*order*(nmod+1);
 	for(int i=0; i<order; i++){

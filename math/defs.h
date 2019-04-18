@@ -158,9 +158,10 @@
 #else
 #define M_SPT M_SPT32
 #endif
-static inline int issp(const TwoDim *A){
-    return ID(A)==M_SPT;
-}
+//static inline int issp(const TwoDim *A){
+    //return ID(A)==M_SPT;
+//}
+#define issp(A) 1
 #endif //if USE_LONG
 
 #define ABS2(A) creal((A)*conj(A))

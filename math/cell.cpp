@@ -27,12 +27,6 @@ cell *cellnew(long nx, long ny){
     if(nx<0) nx=0;
     if(ny<0) ny=0;
     cell *dc=new cell(nx ,ny);
-    /*dc->id=MCC_ANY;
-    dc->nx=nx;
-    dc->ny=ny;*/
-    /*if(nx*ny>0){
-	dc->p=mycalloc(nx*ny,cell*);
-	}*/
     return dc;
 }
 
@@ -135,47 +129,16 @@ void celldim(const TwoDim *A_, long *nx, long *ny, long **nxs, long **nys){
 /**
    Resize a generic cell array.
 */
+
 void cellresize(TwoDim *in, long nx, long ny){
     cell *A=cell_cast(in);
-    if(A->nx==nx || A->ny==1){
-	int nold=A->nx*A->ny;
-	int nnew=nx*ny;
-	if(nnew<nold && iscell(A)){
-	    for(int i=nnew; i<nold; i++){
-		cellfree_do(A->p[i]);
-	    }
-	}
-	A->p=myrealloc(A->p,nnew,cell*);
-	if(nnew>nold){
-	    memset(A->p+nold, 0, (nnew-nold)*sizeof(cell*));
-	}
-    }else{
-	cell **p=mycalloc(nx*ny,cell*);
-	long minx=A->nx<nx?A->nx:nx;
-	long miny=A->ny<ny?A->ny:ny;
-	for(long iy=0; iy<miny; iy++){
-	    for(long ix=0; ix<minx; ix++){
-		p[ix+iy*nx]=A->p[ix+iy*A->nx];
-		A->p[ix+iy*A->nx]=0;
-	    }
-	}
-	if(iscell(A)){
-	    for(long i=0; i<A->nx*A->ny; i++){
-		cellfree_do(A->p[i]);
-	    }
-	}
-	free(A->p);
-	A->p=p;
-    }
-    A->nx=nx;
-    A->ny=ny;
+    A->Resize(nx, ny);
 }
-
 
 /**
    free a mat or cell object.
 */
-#define cellfree_do(A) delete A
+//#define cellfree_do(A) delete A
 /*void cellfree_do(TwoDim *A){
     if(!A) return;
     uint32_t id=((cell*)A)->id;

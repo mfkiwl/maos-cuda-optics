@@ -87,6 +87,7 @@ AOS_FFT_DEF(AOS_CMAT)
 AOS_MAT_DEF(AOS_LMAT, long,long)
 AOS_MATBIN_DEF(AOS_LMAT,long)
 
+#define cellfree_do(A) delete A
 #define abs2(A)      ((A)*(A))
 #define cabs2f(A)    (abs2(crealf(A))+abs2(cimagf(A)))
 #define cabs2(A)     (abs2(creal(A))+abs2(cimag(A)))
@@ -109,7 +110,7 @@ AOS_MATBIN_DEF(AOS_LMAT,long)
 #define lfree(A)     ({lfree_do(A,0);A=NULL;})
 #define lcellfree(A) ({cellfree_do(A);A=NULL;})
 
-#define cellfree(A) ({cellfree_do(A); A=0;})
+#define cellfree(A) ({delete A; A=0;})
 
 #define mapwrite(out, A...) write_by_id(out, M_MAP64, A)
 #define mapread(A...)    (map_t*)read_by_id(M_MAP64, 0, A)

@@ -246,7 +246,7 @@ void pywfs_ints(curmat &ints, curmat &phiout, cuwfs_t &cuwfs, Real siglev){
 	//cuwrite(ints, "gpu_ints"); exit(0);
     }
 }
-dmat *gpu_pywfs_mkg(const PYWFS_T *pywfs, const loc_t* locin, const loc_t* locfft, const dmat *mod, double displacex, double displacey){
+dmat *gpu_pywfs_mkg(const PYWFS_T *pywfs, const loc_t* locin, const loc_t* locfft, dmat *mod, double displacex, double displacey){
     gpu_set(cuglobal->wfsgpu[pywfs->iwfs0]);
     cuwfs_t &cuwfs=cuglobal->wfs[pywfs->iwfs0];
     cupowfs_t *cupowfs=cuwfs.powfs;

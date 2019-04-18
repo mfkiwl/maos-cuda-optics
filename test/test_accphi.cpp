@@ -79,7 +79,8 @@ static void test_accuracy(int argc, char **argv){
 	}
     }
     //pts_t *pts=realloc(mkannloc(D, 0, 1./2.,0), sizeof(pts_t));
-    pts_t *pts=(pts_t*)realloc(mksqloc_auto(D/dsa, D/dsa, dsa, dsa), sizeof(pts_t));
+    loc_t *ptsloc=mksqloc_auto(D/dsa, D/dsa, dsa, dsa);
+    pts_t *pts=new pts_t(*ptsloc);
     pts->dx=dx;
     pts->dy=dx;
     pts->nx=dsa/dx;

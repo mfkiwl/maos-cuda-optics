@@ -43,7 +43,7 @@ dmat *psd1d(const dmat *v, /**<[in] The data sequence*/
     for(long icol=0; icol<ncol; icol++){
 	double *ppsd=psd->p+icol*(lseg2+1);
 	for(int iseg=0; iseg<nseg; iseg++){
-	    double* p=v->p+icol*nx+iseg*lseg2;
+	    const double* p=v->p+icol*nx+iseg*lseg2;
 	    for(int ix=0; ix<lseg; ix++){
 		hat->p[ix]=p[ix]*W_J(ix, lseg2);
 	    }
@@ -82,7 +82,7 @@ dmat *psd1dt(const dmat *v, long nseg, double dt){
 }
 
 /*Interpolate psd onto new f. We interpolate in log space which is more linear.*/
-dmat *psdinterp1(const dmat *psdin, const dmat *fnew, int uselog){
+dmat *psdinterp1(dmat *psdin, const dmat *fnew, int uselog){
     dmat *f1=drefcols(psdin, 0, 1);
     dmat *psd1=dsub(psdin, 0, 0, 1, 1);//copy
     dmat *f2=dref(fnew);
@@ -108,8 +108,8 @@ dmat *psdinterp1(const dmat *psdin, const dmat *fnew, int uselog){
    Find vibration peaks in the PSD by comparing the PSD against a LPF version plus noise.
  */
 dmat *psd_vibid(const dmat *psdin){
-    double *f=psdin->p;
-    double *psd=psdin->p+psdin->nx;
+    const double *f=psdin->p;
+    const double *psd=psdin->p+psdin->nx;
     dmat *y=dsub(psdin, 0, 0, 1, 1);
     const double gain=0.1;
     const double gain2=0.05;
@@ -243,9 +243,9 @@ double psd_inte2(const dmat *psdin){
     if(psdin->ny!=2){
 	error("psdin  should have two columns\n");
     }
-    double *nu=psdin->p;
+    const double *nu=psdin->p;
     long n=psdin->nx;
-    double *psd=nu+n;
+    const double *psd=nu+n;
     return psd_inte(nu, psd, n);
 }
 

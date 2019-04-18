@@ -23,15 +23,15 @@
 #endif
 
 #define AOS_MAT_DEF(X,T,R)						\
-    X(mat) *X(new_ref)(long nx, long ny, T *p) CHECK_UNUSED_RESULT;	\
-    X(mat) *X(new_data)(long nx, long ny, T *p) CHECK_UNUSED_RESULT;	\
+    X(mat) *X(new_ref)(long nx, long ny, const T *p) CHECK_UNUSED_RESULT; \
+    X(mat) *X(new_data)(long nx, long ny, const T *p) CHECK_UNUSED_RESULT; \
     X(mat) *X(new)(long nx, long ny) CHECK_UNUSED_RESULT;		\
     X(mat) *X(mat_cast)(const TwoDim *A) CHECK_UNUSED_RESULT;		\
     void X(init)(X(mat)**A, long nx, long ny) ;				\
     void X(free_do)(X(mat) *A, int keepdata);				\
     X(mat) *X(ref)(const X(mat) *in) CHECK_UNUSED_RESULT;		\
     X(mat) *X(ref_reshape)(const X(mat) *in, long nx, long ny) CHECK_UNUSED_RESULT; \
-    X(mat) *X(refcols)(const X(mat) *in, long icol, long ncol) CHECK_UNUSED_RESULT; \
+    X(mat) *X(refcols)(X(mat) *in, long icol, long ncol) CHECK_UNUSED_RESULT; \
     void X(resize)(X(mat) *A, long nx, long ny);			\
     X(mat) *X(sub)(const X(mat) *in, long sx, long nx, long sy, long ny) CHECK_UNUSED_RESULT; \
     X(mat) *X(cat)(const X(mat) *in1, const X(mat) *in2, int dim) CHECK_UNUSED_RESULT; \
@@ -68,7 +68,7 @@
     X(cell) *X(cellcat)(const X(cell) *A, const X(cell) *B, int dim);	\
     X(cell) *X(cellcat_each)(const X(cell) *A, const X(cell) *B, int dim); \
     X(mat) *X(cell2m)(const TwoDim *A);					\
-    X(cell)* X(2cellref)(const X(mat) *A, long*dims, long ndim);	\
+    X(cell)* X(2cellref)(X(mat) *A, long*dims, long ndim);	\
     void X(2cell)(X(cell) **B, const X(mat) *A, const X(cell) *ref);	\
 
 #endif

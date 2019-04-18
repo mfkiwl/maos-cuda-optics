@@ -49,7 +49,7 @@ void wfsints(thread_t *thread_data){
     const int wfsind=parms->powfs[ipowfs].wfsind->p[iwfs];
     const int hasllt=(parms->powfs[ipowfs].llt!=NULL);
     const int illt=hasllt?parms->powfs[ipowfs].llt->i->p[wfsind]:0;
-    const double *srot=(hasllt && parms->powfs[ipowfs].radrot)?powfs[ipowfs].srot->p[illt]->p:NULL;
+    const double *srot=(hasllt && parms->powfs[ipowfs].radrot)?powfs[ipowfs].srot->p[illt]->p():NULL;
     const int nsa=powfs[ipowfs].saloc->nloc;
     const int ncompx=powfs[ipowfs].ncompx;/*necessary size to build detector image. */
     const int ncompy=powfs[ipowfs].ncompy;
@@ -109,14 +109,15 @@ void wfsints(thread_t *thread_data){
     if(psfout){
 	fftpsfout=cnew(psf->nx, psf->ny);
     }
-    double *gx=NULL; double *gy=NULL;
+    const double *gx=NULL; 
+    const double *gy=NULL;
     /* need to output pixel itnensity averages */
     if(pistatout){
 	assert(pistatout->nx==nsa && pistatout->ny==nwvl);
 	psftmp=cnew(psf->nx,psf->ny);
 	/* the gradient reference for pistatout*/
 	if(data->gradref){
-	    gx=data->gradref->p;
+	    gx=data->gradref->p();
 	    gy=gx+nsa;
 	}
     }

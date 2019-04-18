@@ -479,9 +479,9 @@ void muv_direct_diag_free(MUV_T *A){
    Free MUV_T struct
 */
 void muv_free(MUV_T *A){
+    cellfree(A->U);
+    cellfree(A->V);
     cellfree(A->M);
-    dcellfree(A->U);
-    dcellfree(A->V);
     if(A->extra){
 	free(A->extra);/*a struct contains pointers. */
     }

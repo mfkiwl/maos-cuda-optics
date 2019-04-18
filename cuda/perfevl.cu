@@ -412,7 +412,7 @@ void gpu_perfevl_queue(thread_t *info){
 			}
 		    }
 		}else if(parms->evl.psfmean){
-		    psfcomp_r(cuglobal->perf.psfcl+nwvl*ievl, iopdevl, nwvl, ievl, nloc, 0, stream);
+		    psfcomp_r(&cuglobal->perf.psfcl[nwvl*ievl], iopdevl, nwvl, ievl, nloc, 0, stream);
 		}
 		if(parms->plot.run){
 		    for(int iwvl=0; iwvl<nwvl; iwvl++){
@@ -516,7 +516,7 @@ void gpu_perfevl_ngsr(SIM_T *simu, double *cleNGSm){
 		    }
 		}
 	    }else if(parms->evl.psfmean){
-		psfcomp_r(cuglobal->perf.psfcl_ngsr+nwvl*ievl, iopdevl, nwvl, ievl, nloc, 0, stream);
+		psfcomp_r(&cuglobal->perf.psfcl_ngsr[nwvl*ievl], iopdevl, nwvl, ievl, nloc, 0, stream);
 	    }
 	    if(!parms->gpu.psf){
 		for(int iwvl=0; iwvl<nwvl; iwvl++){

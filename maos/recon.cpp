@@ -110,7 +110,8 @@ static void calc_gradol(SIM_T *simu){
   	if(parms->powfs[ipowfs].psol){
 	    if((simu->reconisim+1) % parms->powfs[ipowfs].dtrat == 0){/*Has output. */
 		int nindwfs=parms->recon.glao?1:parms->powfs[ipowfs].nwfs;
-		OMPTASK_FOR(indwfs, 0, nindwfs){
+		//OMPTASK_FOR(indwfs, 0, nindwfs){
+		for(int indwfs=0; indwfs<nindwfs; indwfs++){
 		    int iwfs=parms->recon.glao?ipowfs:parms->powfs[ipowfs].wfs->p[indwfs];
 		    dcp(&simu->gradlastol->p[iwfs], simu->gradlastcl->p[iwfs]);
 		    for(int idm=0; idm<parms->ndm && simu->wfspsol->p[ipowfs]; idm++){
@@ -118,7 +119,19 @@ static void calc_gradol(SIM_T *simu){
 			      simu->wfspsol->p[ipowfs]->p[idm], "nn", 1);
 		    }
 		}
-		OMPTASK_END;
+	    //OMPTASK_END;
+		if(simu->reconisim<20 && 0){
+		    dmat *tmp=0;
+		    int iwfs=parms->recon.glao?ipowfs:parms->powfs[ipowfs].wfs->p[0];
+		    for(int idm=0; idm<parms->ndm && simu->wfspsol->p[ipowfs]; idm++){
+			dspmm(&tmp, P(GA,iwfs,idm), simu->wfspsol->p[ipowfs]->p[idm], "nn", 1);
+		    }
+		    writebin(simu->gradlastcl, "lastcl_%d", simu->reconisim);
+		    writebin(simu->gradlastol, "lastol_%d", simu->reconisim);
+		    writebin(tmp, "gradpsol_%d", simu->reconisim);
+		    writebin(simu->wfspsol, "wfspsol_%d", simu->reconisim);
+		    delete tmp;
+		}
 	    }
 	}
     }
@@ -385,6 +398,14 @@ void reconstruct(SIM_T *simu){
 	    dcellcp(&simu->dmerr, simu->dmfit);/*keep dmfit for warm restart */
 	}
 	if(parms->recon.psol){
+	    if(parms->plot.run && simu->dmfit){
+		for(int i=0; i<simu->dmfit->nx; i++){
+		    if(simu->dmfit->p[i]){
+			drawopd("DM", recon->aloc->p[i], simu->dmfit->p[i]->p, parms->dbg.draw_opdmax->p,
+				"DM Fitting Output","x (m)", "y (m)","Fit %d",i);
+		    }
+		}
+	    }
 	    //form error signal in PSOL mode
 	    if(0){
 		warning_once("temporarily disable recon->actinterp\n");
@@ -420,14 +441,6 @@ void reconstruct(SIM_T *simu){
 		    if(simu->opdr->p[i]){
 			drawopd("opdr", recon->xloc->p[i], simu->opdr->p[i]->p, parms->dbg.draw_opdmax->p,
 				"Reconstructed Atmosphere","x (m)","y (m)","opdr %d",i);
-		    }
-		}
-		if(simu->dmfit && simu->dmfit!=simu->dmerr){
-		    for(int i=0; i<simu->dmfit->nx; i++){
-			if(simu->dmfit->p[i]){
-			    drawopd("DM", recon->aloc->p[i], simu->dmfit->p[i]->p, parms->dbg.draw_opdmax->p,
-				    "DM Fitting Output","x (m)", "y (m)","Fit %d",i);
-			}
 		    }
 		}
 	    }

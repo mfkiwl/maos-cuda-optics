@@ -35,21 +35,20 @@ typedef spint SS_INT;
 #define SS_UNFLIP(i) (((i) < 0) ? SS_FLIP(i) : (i))
 #define SS_MARKED(w,j) (w [j] < 0)
 #define SS_MARK(w,j) { w [j] = SS_FLIP (w [j]) ; }
-#define SS_CSC(A) (A && (A->nz == -1))
-#define SS_TRIPLET(A) (A && (A->nz >= 0))
+#define SS_CSC(A) (A)
 
 /**
  free a sparse matrix */
 static cs *ss_spfree (cs *A)
 {
-    if(A){
+    delete A;
+    /*if(A){
 	free (A->p) ;
 	free (A->i) ;
 	free (A->x) ;
-    }
+	}*/
     return NULL;
 }
-
 /**
  wrapper for malloc */
 static void *ss_malloc (SS_INT n, size_t size)
@@ -63,54 +62,21 @@ static void *ss_calloc (SS_INT n, size_t size)
 {
     return (calloc (SS_MAX (n,1), size)) ;
 }
-/**
- wrapper for realloc */
-static void *ss_realloc (void *p, SS_INT n, size_t size, SS_INT *ok)
-{
-    void *pnew ;
-    pnew = realloc (p, SS_MAX (n,1) * size) ; /* realloc the block */
-    *ok = (pnew != NULL) ;                  /* realloc fails if pnew is NULL */
-    return ((*ok) ? pnew : p) ;             /* return original p if failure */
-}
 
-/**
- allocate a sparse matrix (triplet form or compressed-column form) */
-static cs *ss_spalloc (SS_INT m, SS_INT n, SS_INT nzmax, SS_INT values, SS_INT triplet)
-{
-    cs *A = (cs*)ss_calloc (1, sizeof (cs)) ;    /* allocate the cs struct */
-    if (!A) return (NULL) ;                 /* out of memory */
-    A->id = M_SPT;
-    A->nx = m ;                              /* define dimensions and nzmax */
-    A->ny = n ;
-    A->nzmax = nzmax = SS_MAX (nzmax, 1) ;
-    A->nz = triplet ? 0 : -1 ;              /* allocate triplet or comp.col */
-    A->p = (SS_INT*)ss_malloc (triplet ? nzmax : n+1, sizeof (SS_INT)) ;
-    A->i = (SS_INT*)ss_malloc (nzmax, sizeof (SS_INT)) ;
-    A->x = values ? (SS_ENTRY*)ss_malloc (nzmax, sizeof (SS_ENTRY)) : NULL ;
-    A->nref=mycalloc(1,int);
-    A->nref[0]=1;
-    if((!A->p || !A->i || (values && !A->x))){
-	error("Out of memory: p=%p, i=%p, x=%p\n", A->p, A->i, A->x);
-	ss_spfree(A); 
-	A=NULL;
-    }
-    return A;
-}
 
 /**
  change the max # of entries sparse matrix */
-static SS_INT ss_sprealloc (cs *A, SS_INT nzmax)
+/*static SS_INT ss_sprealloc (cs *A, SS_INT nzmax)
 {
     SS_INT ok, oki, okj = 1, okx = 1 ;
     if (!A) return (0) ;
     if (nzmax <= 0) nzmax = (SS_CSC (A)) ? (A->p [A->ny]) : A->nz ;
     A->i = (SS_INT*)ss_realloc (A->i, nzmax, sizeof (SS_INT), &oki) ;
-    if (SS_TRIPLET (A)) A->p = (SS_INT*)ss_realloc (A->p, nzmax, sizeof (SS_INT), &okj) ;
     if (A->x) A->x = (SS_ENTRY*)ss_realloc (A->x, nzmax, sizeof (SS_ENTRY), &okx) ;
     ok = (oki && okj && okx) ;
     if (ok) A->nzmax = nzmax ;
     return (ok) ;
-}
+}*/
 
 /**
  free workspace and return a sparse matrix result */
@@ -126,8 +92,9 @@ static cs *ss_done (cs *C, void *w, void *x, SS_INT ok)
 static SS_INT ss_scatter (const cs *A, SS_INT j, SS_ENTRY beta, SS_INT *w, SS_ENTRY *x, SS_INT mark,
     cs *C, SS_INT nz)
 {
-    SS_INT i, p, *Ap, *Ai, *Ci ;
-    SS_ENTRY *Ax ;
+    SS_INT i, p, *Ci;
+    const  SS_INT *Ap, *Ai ;
+    const SS_ENTRY *Ax ;
     if (!SS_CSC (A) || !w || !SS_CSC (C)) return (-1) ;     /* check inputs */
     Ap = A->p ; Ai = A->i ; Ax = A->x ; Ci = C->i ;
     for (p = Ap [j] ; p < Ap [j+1] ; p++)
@@ -148,8 +115,10 @@ static SS_INT ss_scatter (const cs *A, SS_INT j, SS_ENTRY beta, SS_INT *w, SS_EN
  C = A*B */
 cs* X(ss_multiply) (const cs *A, const cs *B)
 {
-    SS_INT p, j, nz = 0, anz, *Cp, *Ci, *Bp, m, n, bnz, *w, values, *Bi ;
-    SS_ENTRY *x, *Bx, *Cx ;
+    SS_INT p, j, nz = 0, anz, *Cp, *Ci, m, n, bnz, *w;
+    const SS_INT *Bp, *Bi;
+    SS_ENTRY *x, *Cx;
+    const SS_ENTRY *Bx ;
     cs *C ;
     if (!SS_CSC (A) || !SS_CSC (B)) {
 	error("A or B is not in CSC format\n");
@@ -162,17 +131,17 @@ cs* X(ss_multiply) (const cs *A, const cs *B)
     m = A->nx ; anz = A->p [A->ny] ;
     n = B->ny ; Bp = B->p ; Bi = B->i ; Bx = B->x ; bnz = Bp [n] ;
     w = (SS_INT*)ss_calloc (m, sizeof (SS_INT)) ;                    /* get workspace */
-    values = (A->x != NULL) && (Bx != NULL) ;
-    x = values ? (SS_ENTRY*)ss_malloc (m, sizeof (SS_ENTRY)) : NULL ; /* get workspace */
-    C = ss_spalloc (m, n, anz + bnz, values, 0) ;        /* allocate result */
-    if (!C || !w || (values && !x)){
+    x = (SS_ENTRY*)ss_malloc (m, sizeof (SS_ENTRY)) ; /* get workspace */
+    //C = ss_spalloc (m, n, anz + bnz, values) ;        /* allocate result */
+    C = X(spnew) (m ,n, anz+bnz);
+    if (!C || !w || (!x)){
 	error("Out of memory\n");
 	return (ss_done (C, w, x, 0)) ;
     }
     Cp = C->p ;
     for (j = 0 ; j < n ; j++)
     {
-        if (nz + m > C->nzmax && !ss_sprealloc (C, 2*(C->nzmax)+m))
+        if (nz + m > C->nzmax && !X(spsetnzmax) (C, 2*(C->nzmax)+m))
         {
 	    error("Out of memory. \n");
             return (ss_done (C, w, x, 0)) ;             /* out of memory */
@@ -183,10 +152,10 @@ cs* X(ss_multiply) (const cs *A, const cs *B)
         {
             nz = ss_scatter (A, Bi [p], Bx ? Bx [p] : 1, w, x, j+1, C, nz) ;
         }
-        if (values) for (p = Cp [j] ; p < nz ; p++) Cx [p] = x [Ci [p]] ;
+        for (p = Cp [j] ; p < nz ; p++) Cx [p] = x [Ci [p]] ;
     }
     Cp [n] = nz ;                       /* finalize the last column of C */
-    ss_sprealloc (C, 0) ;               /* remove extra space from C */
+    X(spsetnzmax) (C, 0) ;               /* remove extra space from C */
     return (ss_done (C, w, x, 1)) ;     /* success; free workspace, return C */
 }
 
@@ -194,8 +163,9 @@ cs* X(ss_multiply) (const cs *A, const cs *B)
  C = alpha*A + beta*B */
 cs* X(ss_add) (const cs *A, const cs *B, SS_ENTRY alpha, SS_ENTRY beta)
 {
-    SS_INT p, j, nz = 0, anz, *Cp, *Ci, *Bp, m, n, bnz, *w, values ;
-    SS_ENTRY *x, *Bx, *Cx ;
+    SS_INT p, j, nz = 0, anz, *Cp, *Ci, m, n, bnz, *w ;
+    const SS_INT *Bp;
+    SS_ENTRY *x, *Cx ;
     cs *C ;
     if (!SS_CSC (A) || !SS_CSC (B)){
 	error("A or B is not in CSC format\n");
@@ -206,16 +176,15 @@ cs* X(ss_add) (const cs *A, const cs *B, SS_ENTRY alpha, SS_ENTRY beta)
 	return (NULL) ;
     }
     m = A->nx ; anz = A->p [A->ny] ;
-    n = B->ny ; Bp = B->p ; Bx = B->x ; bnz = Bp [n] ;
+    n = B->ny ; Bp = B->p ; ; bnz = Bp [n] ;
     w = (SS_INT*)ss_calloc (m, sizeof (SS_INT)) ;                       /* get workspace */
-    values = (A->x != NULL) && (Bx != NULL) ;
-    x = values ? (SS_ENTRY*)ss_malloc (m, sizeof (SS_ENTRY)) : NULL ;    /* get workspace */
+    x = (SS_ENTRY*)ss_malloc (m, sizeof (SS_ENTRY)) ;    /* get workspace */
     SS_INT cnz=anz + bnz;
     if(cnz>m*n){
 	cnz=m*n;
     }
-    C = ss_spalloc (m, n, cnz, values, 0) ;           /* allocate result*/
-    if (!C || !w || (values && !x)) {
+    C = X(spnew)(m, n, cnz) ;           /* allocate result*/
+    if (!C || !w || (!x)) {
 	error("Out of memory\n");
 	return (ss_done (C, w, x, 0)) ;
     }
@@ -225,10 +194,10 @@ cs* X(ss_add) (const cs *A, const cs *B, SS_ENTRY alpha, SS_ENTRY beta)
         Cp [j] = nz ;                   /* column j of C starts here */
         nz = ss_scatter (A, j, alpha, w, x, j+1, C, nz) ;   /* alpha*A(:,j)*/
         nz = ss_scatter (B, j, beta, w, x, j+1, C, nz) ;    /* beta*B(:,j) */
-        if (values) for (p = Cp [j] ; p < nz ; p++) Cx [p] = x [Ci [p]] ;
+        for (p = Cp [j] ; p < nz ; p++) Cx [p] = x [Ci [p]] ;
     }
     Cp [n] = nz ;                       /* finalize the last column of C */
-    ss_sprealloc (C, 0) ;               /* remove extra space from C */
+    X(spsetnzmax) (C, 0) ;               /* remove extra space from C */
     return (ss_done (C, w, x, 1)) ;     /* success; free workspace, return C */
 }
 
@@ -254,7 +223,7 @@ static SS_INT ss_fkeep (cs *A, SS_INT (*fkeep) (SS_INT, SS_INT, SS_ENTRY, void *
         }
     }
     Ap [n] = nz ;                           /* finalize A */
-    ss_sprealloc (A, 0) ;                   /* remove extra space from A */
+    X(spsetnzmax) (A, 0) ;                   /* remove extra space from A */
     return (nz) ;
 }
 /**
@@ -308,12 +277,14 @@ static double ss_cumsum (SS_INT *p, SS_INT *c, SS_INT n)
 
 cs* X(ss_transpose) (const cs *A, SS_INT values)
 {
-    SS_INT p, q, j, *Cp, *Ci, n, m, *Ap, *Ai, *w ;
-    SS_ENTRY *Cx, *Ax ;
+    SS_INT p, q, j, *Cp, *Ci, n, m, *w ;
+    SS_ENTRY *Cx;
+    const SS_INT *Ap, *Ai;
+    const SS_ENTRY *Ax;
     cs *C ;
     if (!SS_CSC (A)) return (NULL) ;    /* check inputs */
     m = A->nx ; n = A->ny ; Ap = A->p ; Ai = A->i ; Ax = A->x ;
-    C = ss_spalloc (n, m, Ap [n], values && Ax, 0) ;       /* allocate result */
+    C = X(spnew) (n, m, Ap [n]) ;       /* allocate result */
     w = (SS_INT*)ss_calloc (m, sizeof (SS_INT)) ;                      /* get workspace */
     if (!C || !w) return (ss_done (C, w, NULL, 0)) ;       /* out of memory */
     Cp = C->p ; Ci = C->i ; Cx = C->x ;

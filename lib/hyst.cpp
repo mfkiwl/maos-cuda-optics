@@ -95,7 +95,7 @@ void hyst_free(HYST_T *hyst){
    Apply hysteresis to DM vector.
 */
 void hyst_dmat(HYST_T *hyst, dmat *dmreal, const dmat *dmcmd){
-    double *restrict x=dmcmd->p;
+    const double *restrict x=dmcmd->p;
     double *restrict xout=dmreal->p;
     double *restrict xlast=hyst->xlast->p;
     double *restrict dxlast=hyst->dxlast->p;

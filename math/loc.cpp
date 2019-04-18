@@ -28,6 +28,9 @@ struct loc_private{
    Free pts_t data
 */
 void ptsfree_do(pts_t *pts){
+    locfree_do((loc_t*)pts);
+    //delete pts;
+/*
     if(pts && pts->nref && !atomicadd(pts->nref, -1)){
 	if(pts->origx){
 	    free(pts->origx);
@@ -39,6 +42,7 @@ void ptsfree_do(pts_t *pts){
 	free(pts->nref);
     }
     free(pts);
+*/
 }
 
 /**
@@ -129,7 +133,17 @@ loc_t *locnew(long nloc,double dx, double dy){
  */
 loc_t *locref(const loc_t *in){
     loc_t *out=new loc_t;
-    memcpy(out, in, sizeof(loc_t));
+    out->locx=in->locx;
+    out->locy=in->locy;
+    out->nloc=in->nloc;
+    out->dx=in->dx;
+    out->dy=in->dy;
+    out->ht=in->ht;
+    out->iac=in->iac;
+    out->stat=in->stat;
+    out->map=in->map;
+    out->npad=in->npad;
+    out->nref=in->nref;
     if(out->nref){
 	atomicadd(out->nref, 1);
     }
@@ -139,7 +153,7 @@ loc_t *locref(const loc_t *in){
    Create a pts with nsa, dsa, nx, dx
 */
 pts_t *ptsnew(long nsa, double dsax, double dsay, long nx, double dx, double dy){
-    pts_t *pts=mycalloc(1,pts_t);
+    pts_t *pts=new pts_t;
     pts->id=M_LOC64;
     pts->origx=mycalloc(nsa,double);
     pts->origy=mycalloc(nsa,double);
@@ -1396,7 +1410,6 @@ void locresize(loc_t *loc, long nloc){
    create a new map_t object.
 */
 map_t *mapnew(long nx, long ny, double dx, double dy, double *p){
-    //map_t *map=(map_t*)realloc(dnew_data(nx, ny, p),sizeof(map_t));
     return new map_t(nx, ny, dx, dy, p);
 }
 /**
@@ -1405,9 +1418,6 @@ map_t *mapnew(long nx, long ny, double dx, double dy, double *p){
 map_t *mapnew2(map_t* A){
     if(!A) return NULL;
     map_t *map=new map_t(A->nx, A->ny, A->dx, A->dy, 0);
-    //map_t *map=(map_t*)realloc(dnew_data(A->nx, A->ny, NULL),sizeof(map_t));
-    /*map->dx=A->dx;
-      map->dy=A->dy;*/
     map->ox=A->ox;
     map->oy=A->oy;
     map->h=A->h;
@@ -1419,19 +1429,6 @@ map_t *mapnew2(map_t* A){
 map_t *mapref(map_t*in){
     if(!in) return NULL;
     else return new map_t(*in);
-
-/*
-    map_t *out=mycalloc(1,map_t);
-    memcpy(out,in,sizeof(map_t));
-    if(!in->nref){
-	extern quitfun_t quitfun;
-	if(quitfun==&default_quitfun){
-	    warning_once("Referencing non-referenced data. This may cause error.\n");
-	}
-    }else{
-	atomicadd(in->nref, 1);
-    }
-    return out;*/
 }
 /**
    Create a circular aperture on map_t.

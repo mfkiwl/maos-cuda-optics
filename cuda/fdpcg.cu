@@ -36,7 +36,7 @@ cufdpcg_t::cufdpcg_t(FDPCG_T *fdpcg, const curecon_geom *_grid)
     bs=fdpcg->bs;//linear size of each block.
     nb=fdpcg->permhf->nx/bs;//size of non-redundant block
     update(fdpcg);
-    cp2gpu(perm, fdpcg->permhf->p, nb*bs, 1);
+    cp2gpu(perm, fdpcg->permhf->p(), nb*bs, 1);
     int nps=grid->npsr;
     int count=0;
     int osi=-1;

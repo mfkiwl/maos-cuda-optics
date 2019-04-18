@@ -35,14 +35,14 @@
 /**
    Convert our dsp spase type to cholmod_sparse type. Data is shared. 
 */
-static cholmod_sparse *dsp2chol(const dsp *A){
+static cholmod_sparse *dsp2chol(dsp *A){
     cholmod_sparse *B=mycalloc(1,cholmod_sparse);
     B->nrow=A->nx;
     B->ncol=A->ny;
     B->nzmax=A->nzmax;
-    B->p=A->p;/*do not duplicate. */
-    B->i=A->i;
-    B->x=A->x;
+    B->p=A->p();/*do not duplicate. */
+    B->i=A->i();
+    B->x=A->x();
     B->stype=1;/*assume data is symmetric. upper triangular part is used. */
     B->itype=ITYPE;
     B->xtype=CHOLMOD_REAL;
@@ -67,7 +67,7 @@ static dsp *chol2sp(const cholmod_sparse *B){
 /**
    Convert our dmat type to cholmod_dense type.
 */
-static cholmod_dense* d2chol(const dmat *A, int start, int end){
+static cholmod_dense* d2chol(dmat *A, int start, int end){
     cholmod_dense* B=mycalloc(1,cholmod_dense);
     if(end==0) end=A->ny;
     B->nrow=A->nx;
@@ -333,7 +333,7 @@ spchol *chol_read(const char *format, ...){
 typedef struct{
     dmat *x;
     spchol *A;
-    const dmat *y;
+    dmat *y;
 }CHOLSOLVE_T;
 /*
   Solve section of the columns in multi-threaded way.
@@ -396,9 +396,9 @@ void chol_solve(dmat **x, spchol *A, dmat *y){
    Solve A*x=y where Y is sparse. Not good idea to use dsp ** as chol_solve
    because the result may have different nzmax.
 */
-dsp *chol_spsolve(spchol *A, const dsp *y){
+dsp *chol_spsolve(const spchol *A, const dsp *y){
     assert(A->L->xtype!=0);/* error("A->L is pattern only!\n"); */
-    cholmod_sparse *y2=dsp2chol(y);
+    cholmod_sparse *y2=dsp2chol((dsp*)y);
     cholmod_sparse *x2=MOD(spsolve)(CHOLMOD_A,A->L,y2,A->c);
     if(!x2) error("chol_solve failed\n");
     if(x2->z) error("why is this?\n");

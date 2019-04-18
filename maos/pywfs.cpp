@@ -778,7 +778,7 @@ static uint32_t pywfs_hash(const PYWFS_T *pywfs, uint32_t key){
    radian of tilt, which is gauranteed when pywfs->gain is computed under the
    same conditions.
  */
-static dmat *pywfs_mkg_do(const PYWFS_T *pywfs, const loc_t* locin, const loc_t *locfft, const dmat *mod, 
+static dmat *pywfs_mkg_do(const PYWFS_T *pywfs, const loc_t* locin, const loc_t *locfft, dmat *mod, 
 			  double displacex, double displacey, double scale){
     const int nsa=pywfs->si->p[0]->nx;
     dmat *grad0=dnew(nsa*2,1);
@@ -848,7 +848,7 @@ static dmat *pywfs_mkg_do(const PYWFS_T *pywfs, const loc_t* locin, const loc_t 
 /**
    locin is on pupil.
  */
-dmat* pywfs_mkg(PYWFS_T *pywfs, const loc_t* locin, const char *distortion, const dmat *mod, const dmat *opdadd, 
+dmat* pywfs_mkg(PYWFS_T *pywfs, const loc_t* locin, const char *distortion, dmat *mod, const dmat *opdadd, 
 		double displacex, double displacey, double scale){
     if(opdadd){
 	dfree(pywfs->opdadd);

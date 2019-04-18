@@ -338,7 +338,7 @@ setup_recon_aloc(RECON_T *recon, const PARMS_T *parms){
 	double dx=parms->dm[idm].dx;
 	recon->aloc->p[idm]->iac=parms->dm[idm].iac;
 	loc_create_map_npad(recon->aloc->p[idm], parms->fit.square?0:1, 0, 0);
-	recon->amap->p[idm]=recon->aloc->p[idm]->map;
+	recon->amap->p[idm]=mapref(recon->aloc->p[idm]->map);
 	recon->amap->p[idm]->h=ht;
 	if(parms->fit.cachedm){
 	    const double dx2=parms->atmr.dx/parms->fit.pos;
@@ -371,6 +371,25 @@ setup_recon_aloc(RECON_T *recon, const PARMS_T *parms){
 	if(parms->dm[idm].actfloat) anyfloat=1;
     }
     if(anystuck){
+	/**
+	   2019-04-17: Stuck actautor is implemented as follows:
+
+	   MVR (recon.alg=0): 
+
+	   1) HA is treated so that stuck actuator influence is zeroed. The DM
+	   fitting output will therefore set 0 to stuck actuators.
+
+	   2) GA is also treated so that stuck actuators influence is
+	   zeroed. This is saying that we treat stuck actautors as input
+	   wavefront that the PSOL reconstructor is supposed to control. Without
+	   this treatment, the PSOL gradients would not measure those stuck
+	   actuators and then cannot use other actuators to reduce their
+	   effects.
+
+	   3) For dmreal the stuck actuators are set to their stuck value in
+	   dmclip().	   
+	   
+	 */
 	recon->actstuck=lcellnew(parms->ndm, 1);
 	for(int idm=0; idm<ndm; idm++){
 	    if(!parms->dm[idm].actstuck) continue;
@@ -715,26 +734,22 @@ setup_recon_GA(RECON_T *recon, const PARMS_T *parms, const POWFS_T *powfs){
 	    }
 	}
     }
-    if(parms->save.setup){
-	writebin(recon->GA, "GA");
-	if(parms->recon.modal){
-	    writebin(recon->amod, "amod");
-	    writebin(recon->GM, "GM");
-	}
+    if(recon->actstuck){
+	/*This is need for LSR reconstructor to skip stuck actuators.  GA is
+	  also used to form PSOL gradients, but that one doesn't need this
+	  modification because actuator extropolation was already applied.*/
+	/*
+	  For MVR we want to treat stuck actuators as input OPD. Therefore its
+	  effect on GA is also removed
+	 */
+	warning("Apply stuck actuators to GA\n");
+	act_stuck(recon->aloc, recon->GA,recon->actstuck);
+	
     }
-    if(!parms->recon.modal){//LSR.
+    if(!parms->recon.modal && parms->recon.alg==1){//LSR.
 	recon->actcpl=genactcpl(recon->GA, 0);
 	act_stuck(recon->aloc, recon->actcpl, recon->actfloat);
-	if(recon->actstuck){
-	    /*This is need for LSR reconstructor to skip stuck actuators.  GA is
-	      also used to form PSOL gradients, but that one doesn't need this
-	      modification because actuator extropolation was already applied.*/
-	    warning("Apply stuck actuators to GA\n");
-	    act_stuck(recon->aloc, recon->GA,recon->actstuck);
-	    if(parms->save.setup){
-		writebin(recon->GA,"GA_stuck");
-	    }
-	}
+
 	if(parms->lsr.actinterp){
 	    recon->actinterp=act_extrap(recon->aloc, recon->actcpl, parms->lsr.actthres);
 	}else if(recon->actfloat){
@@ -755,6 +770,7 @@ setup_recon_GA(RECON_T *recon, const PARMS_T *parms, const POWFS_T *powfs){
 	    }
 	}
     }
+    
     /*Create GAlo that only contains GA for low order wfs */
     recon->GAlo=dspcellnew(recon->GA->nx, recon->GA->ny);
     recon->GAhi=dspcellnew(recon->GA->nx, recon->GA->ny);
@@ -773,6 +789,14 @@ setup_recon_GA(RECON_T *recon, const PARMS_T *parms, const POWFS_T *powfs){
 		    P(recon->GMhi, iwfs, idm)=dref(P(recon->GM, iwfs, idm));
 		}
 	    }
+	}
+    }
+
+    if(parms->save.setup){
+	writebin(recon->GA, "GA");
+	if(parms->recon.modal){
+	    writebin(recon->amod, "amod");
+	    writebin(recon->GM, "GM");
 	}
     }
 }
@@ -869,9 +893,9 @@ setup_recon_GR(RECON_T *recon, const POWFS_T *powfs, const PARMS_T *parms){
 void setup_recon_dmttr(RECON_T *recon, const PARMS_T *parms){
     recon->DMTT=dcellnew(parms->ndm, 1);
     recon->DMPTT=dcellnew(parms->ndm, 1);
-    if(!recon->actcpl && parms->nwfs>0){
+    /*if(!recon->actcpl && parms->nwfs>0){
 	error("actcpl must not be null\n");
-    }
+	}*/
     for(int idm=0; idm<parms->ndm; idm++){
 	recon->DMTT->p[idm]=loc2mat(recon->aloc->p[idm], 0);
     }

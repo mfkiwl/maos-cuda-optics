@@ -1112,11 +1112,8 @@ static void init_simu_dm(SIM_T *simu){
     }
     for(int idm=0; idm<parms->ndm; idm++){
 	simu->dmcmd->p[idm]=dnew(recon->anloc->p[idm],1);
-	if(simu->hyst){
-	    simu->dmreal->p[idm]=dnew(recon->anloc->p[idm],1);
-	}else{
-	    simu->dmreal->p[idm]=dref(simu->dmcmd->p[idm]);
-	}
+	simu->dmreal->p[idm]=dnew(recon->anloc->p[idm],1);
+
 	if(simu->dmrealsq){
 	    simu->dmrealsq->p[idm]=mapnew2(recon->amap->p[idm]);
 	    dset((dmat*)simu->dmrealsq->p[idm], invalid_val);

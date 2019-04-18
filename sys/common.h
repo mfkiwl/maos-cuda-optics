@@ -40,7 +40,7 @@ void default_quitfun(const char *msg);
 #endif
 
 
-#if defined(__cplusplus) //&& !defined(AOS_CUDA_GPU_H)
+#if defined(__cplusplus) 
 //c++ mode, not CUDA
 #include <csignal>
 #include <cstdarg>
@@ -49,8 +49,10 @@ void default_quitfun(const char *msg);
 #include <cstring>
 #include <complex>
 #include <cmath>
+#if !defined(__NVCC__)
 using std::signbit;
 using std::isfinite;
+#endif
 //using std::isnan;
 using std::strerror;
 using std::pow;

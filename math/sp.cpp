@@ -25,12 +25,16 @@
 #include "suitesparse.h"
 #include "defs.h"
 #include "suitesparse.cpp"
-#define assert_sp(A) assert(!A || A->id==M_SPT)
+#define assert_sp(A) //assert(!A || A->id==M_SPT)
 /**
    Create a nx*ny X(sp) matrix with memory for nmax max
    elements allocated.
 */
 X(sp)* X(spnew)(long nx, long ny, long nzmax){
+    X(sp) *sp=new X(sp)(nx, ny, nzmax);
+    sp->id=M_SPT;
+    return sp;
+    /*
     X(sp) *sp;
     if(nx<0) nx=0;
     if(ny<0) ny=0;
@@ -38,20 +42,19 @@ X(sp)* X(spnew)(long nx, long ny, long nzmax){
     sp=new X(sp)(nx, ny);
     sp->id=M_SPT;
     if(nzmax>0){
-	sp->p=mymalloc((ny+1),spint);
-	sp->i=mymalloc(nzmax,spint);
-	sp->x=mymalloc(nzmax,T);
+	sp->p.init(ny+1);//=mymalloc((ny+1),spint);
+	sp->i.init(nzmax);//=mymalloc(nzmax,spint);
+	sp->x.init(nzmax);//=mymalloc(nzmax,T);
+	//sp->nref=mycalloc(1,int);
+	//sp->nref[0]=1;
     }
     sp->nzmax=nzmax;
-    sp->nz=-1;
-    sp->nref=mycalloc(1,int);
-    sp->nref[0]=1;
-    return sp;
+    return sp;*/
 }
 static void X(spfree_content)(X(sp) *sp){
     if(!sp) return;
     assert(issp(sp));
-    if(sp->nref){
+    /*if(sp->nref){
 	int nref=atomicadd(sp->nref, -1);
 	if(!nref){
 	    free(sp->x);
@@ -60,15 +63,25 @@ static void X(spfree_content)(X(sp) *sp){
 	    free(sp->nref);
 	}
     }
+    sp->x=0;
+    sp->p=0;
+    sp->i=0;
+    sp->nref=0;*/
+    sp->x.deinit();
+    sp->p.deinit();
+    sp->i.deinit();
+    free(sp->header);
 }
 /**
  * free a X(sp) matrix*/
 void X(spfree_do)(X(sp) *sp){
+    delete sp;
+    /*
     if(sp){
 	assert(issp(sp));
 	X(spfree_content)(sp);
-	free(sp);
-    }
+	delete sp;
+	}*/
 }
 
 /**
@@ -77,16 +90,8 @@ void X(spfree_do)(X(sp) *sp){
 X(sp) *X(spref)(X(sp) *A){
     if(!A) return NULL;
     assert_sp(A);
-    X(sp) *out = mycalloc(1,X(sp));
-    if(!A->nref){
-	extern quitfun_t quitfun;
-	if(quitfun==&default_quitfun){
-	    warning_once("Referencing non-referenced data. This may cause error.\n");
-	}
-    }else{
-	atomicadd(A->nref,1);
-    }
-    memcpy(out,A,sizeof(X(sp)));
+    X(sp) *out = new X(sp)(*A);
+    out->id=M_SPT;
     return out;
 }
 /**
@@ -94,10 +99,13 @@ X(sp) *X(spref)(X(sp) *A){
 */
 void X(spmove)(X(sp) *A, X(sp) *res){
     if(res && A){
+	*A=*res;
+	delete res;
+	/*
 	assert(issp(res) && issp(A));
 	X(spfree_content)(A);
 	memcpy(A,res,sizeof(X(sp)));
-	memset(res, 0, sizeof(X(sp)));
+	memset(res, 0, sizeof(X(sp)));*/
     }else{
 	if(!(!res && !A)){
 	    error("Trying to move an NULL matrix\n");
@@ -175,13 +183,17 @@ X(sp)* X(sp_cast)(const TwoDim *A){
 /**
    resize a X(sp) matrix
 */
-void X(spsetnzmax)(X(sp) *sp, long nzmax){
+int X(spsetnzmax)(X(sp) *sp, long nzmax){
     assert(issp(sp));
+    if(nzmax<=0){
+	nzmax=sp->p[sp->ny];
+    }
     if(sp->nzmax!=nzmax){
-	sp->i=myrealloc(sp->i,nzmax,spint);
-	sp->x=myrealloc(sp->x,nzmax,T);
+	sp->i.Resize(nzmax);//=myrealloc(sp->i,nzmax,spint);
+	sp->x.Resize(nzmax);//=myrealloc(sp->x,nzmax,T);
 	sp->nzmax=nzmax;
     }
+    return 1;
 }
 
 /**
@@ -251,9 +263,6 @@ int X(spcheck)(const X(sp) *sp){
 void X(spscale)(X(sp) *A, const T beta){
     if(A){
 	assert_sp(A);
-	if(A->nref[0]>1){
-	    warning("spscale on referenced dsp\n");
-	}
 	for(long i=0; i<A->p[A->ny]; i++){
 	    A->x[i]*=beta;
 	}
@@ -533,7 +542,6 @@ void X(spadd)(X(sp) **A0, T alpha, const X(sp) *B, T beta){
 	}else{
 	    X(sp)*res=X(spadd2)(*A0, alpha, B, beta);
 	    X(spmove)(*A0, res);
-	    free(res);
 	}
     }
 }
@@ -558,8 +566,10 @@ void X(spaddI)(X(sp) *A, T alpha){
     }
     long nzmax=A->p[A->ny];
     if(missing){//expanding storage
-	A->x=myrealloc(A->x,(nzmax+missing),T);
-	A->i=myrealloc(A->i,(nzmax+missing),spint);
+	A->x.Resize(nzmax+missing);
+	A->i.Resize(nzmax+missing);
+	//A->x=myrealloc(A->x,(nzmax+missing),T);
+	//A->i=myrealloc(A->i,(nzmax+missing),spint);
     }
     missing=0;
     for(long icol=0; icol<A->ny; icol++){
@@ -648,6 +658,7 @@ X(spcell) *X(spcelltrans)(const X(spcell) *spc){
 }
 /**
  * Free a sparse cell data*/
+/*
 void X(spcellfree_do)(X(spcell) *spc){
     if(!spc || !spc->p) return;
     for(int ix=0; ix<spc->nx*spc->ny; ix++){
@@ -655,7 +666,7 @@ void X(spcellfree_do)(X(spcell) *spc){
     }
     free(spc->p);
     free(spc);
-}
+}*/
 /**
  * Concatenate two sparse array along dim dimension*/
 X(sp) *X(spcat)(const X(sp) *A, const X(sp) *B, int dim){

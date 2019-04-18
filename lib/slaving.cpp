@@ -54,7 +54,7 @@ dcell *genactcpl(const dspcell *HA, const dmat *W1){
     return actcplc;
 }
 /**
-   Compute slaving actuator regularization. HA (or use GA) is used to compute
+   Compute slaving actuator regularization. actcplc indicates 
    active actuators. If NW is non NULL, orthogonalize it with the slaving
    regularization.  When the actuators are in the NULL space of HA, we want to
    contraint their values to be close to the ones that are active. We put an
@@ -94,6 +94,7 @@ dspcell *slaving(loccell *aloc,  /**<[in]The actuator grid*/
 	    }
 	    if(isfloat && isfloat[iact]){
 		actcpl[iact] = 0;/*always include the float actuators */
+		nslave++;
 	    }
 	    if(actcpl[iact]<thres){
 		nslave++;
@@ -247,7 +248,7 @@ void act_stuck(loccell *aloc, void *HA_, const lcell *stuck){
 	}
 	const int nact=aloc->p[idm]->nloc;
 	for(int ifit=0; ifit<nfit; ifit++){
-	    cell *HAi=HA->p[idm*nfit+ifit];
+	    TwoDim *HAi=HA->p[idm*nfit+ifit];
 	    if(HAi->id==M_DBL){//dense
 		dmat *hb=(dmat*)HAi;
 		if(hb->nx>1 && hb->ny==aloc->p[idm]->nloc){

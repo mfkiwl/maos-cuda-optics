@@ -203,10 +203,12 @@ void rename_file(int sig){
 	char fn[PATH_MAX];
 	snprintf(fn, PATH_MAX, "run_%s_%ld.log", HOST, (long)getpid());
 	remove("run_done.log");
-	mysymlink(fn, "run_done.log");
+	rename(fn, "run_done.log");
+	mysymlink("run_done.log", fn);
 	snprintf(fn, PATH_MAX, "maos_%s_%ld.conf", HOST, (long)getpid());
 	remove("maos_done.conf");
-	mysymlink(fn, "maos_done.conf");
+	rename(fn, "maos_done.conf");
+	mysymlink("maos_done.conf", fn);
     }
     if(global && global->parms && global->parms->fdlock && sig!=0){
 	char fn[80];
@@ -324,18 +326,18 @@ ARG_T * parse_args(int argc, const char *argv[]){
     if(nthread<MAXTHREAD && nthread>0){
         NTHREAD=nthread;
     }
-    if(arg->ngpu2>0){
+    if(arg->ngpu2>0){//-G is specified
 	if(!arg->gpus || arg->ngpu==0){
 	    arg->ngpu=arg->ngpu2;
 	}else{
 	    error("-g and -G cannot be specified simultaneously\n");
 	}
-    }else if(arg->ngpu){//check for -g-1
+    }else if(arg->ngpu){//-g is specified. check for -g-1
 	for(int ig=arg->ngpu-1; ig>=0; ig--){
 	    if(arg->gpus[ig]<0){
 		if(ig+1==arg->ngpu){//-g-1 appear last
 		    arg->gpus[0]=-1;
-		    arg->ngpu=1;
+		    arg->ngpu=-1;
 		}else{
 		    //-g-1 is not last. It invalides previous -g's
 		    arg->ngpu=arg->ngpu-(1+ig);
@@ -677,7 +679,7 @@ void lgs_wfs_sph_psd(const PARMS_T *parms, POWFS_T *powfs, RECON_T *recon, const
     double pixthetay=parms->powfs[ipowfs].pixtheta;
     const int wfsind=parms->powfs[ipowfs].wfsind->p[iwfs];
     double *srot=(parms->powfs[ipowfs].radpix)?
-	powfs[ipowfs].srot->p[powfs[ipowfs].srot->ny>1?wfsind:0]->p:NULL;
+	powfs[ipowfs].srot->p[powfs[ipowfs].srot->ny>1?wfsind:0]->p():NULL;
     for(int icol=0; icol<1000; icol+=dtrat){
 	setup_powfs_etf(powfs, parms, ipowfs, 0, icol);
 	gensei(parms, powfs, ipowfs);
@@ -991,7 +993,7 @@ void calc_phygrads(dmat **pgrad, dmat *ints[], const PARMS_T *parms, const POWFS
 	    i0sumg=powfs[ipowfs].intstat->i0sumsum->p[wfsind];
 	    }
 	    }*/
-    const double *srot=(parms->powfs[ipowfs].radpix)?PR(powfs[ipowfs].srot, wfsind, 0)->p:NULL;
+    const double *srot=(parms->powfs[ipowfs].radpix)?PR(powfs[ipowfs].srot, wfsind, 0)->p():NULL;
     double pixthetax=parms->powfs[ipowfs].radpixtheta;
     double pixthetay=parms->powfs[ipowfs].pixtheta;
     /*output directly to simu->gradcl. replace */

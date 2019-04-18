@@ -1698,6 +1698,7 @@ void free_powfs(const PARMS_T *parms, POWFS_T *powfs){
 	    pywfs_free(powfs[ipowfs].pywfs);
 	}
 	free_fit(powfs[ipowfs].fit, parms->powfs[ipowfs].nwfs);
+	powfs[ipowfs].fit=0;
     }
     free(powfs);
 }

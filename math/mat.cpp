@@ -22,59 +22,35 @@
 #include "mathdef.h"
 #include "defs.h"/*Defines T, X, etc */
 //Check for correct type and for possible memory corruption
-inline int ismat(const TwoDim *A){
-    return ID(A)==M_T;
+static inline int ismat(const TwoDim *A){
+    if ((ID(A)&M_T)==M_T){
+	return 1;
+    }else{
+	return 0;
+    }
 }
 #define assert_mat(A) assert(!A || ismat(A))
-/**
-   The only function that actually creats the matrix object. It ensures that all
-   fields are properly initialized. If p is NULL, memory is allocated. If ref is
-   true, p is treated as external resource and is not reference counted.
-*/
-/*
-static X(mat) *X(new_do)(long nx, long ny, T *p, int foreign){
-    X(mat) *out=mycalloc(1,X(mat));
-    out->id=M_T;
-    out->nx=nx;
-    out->ny=ny;
-    if(foreign){//the data does not belong to us. 
-	if(!p){
-	    error("When foreign is 1, p must not be NULL.\n");
-	}
-	out->p=p;
-    }else{
-	if(!p && nx && ny){
-	    p=mycalloc((nx*ny),T);
-	}
-	out->p=p;
-	out->nref=mycalloc(1,int);
-	out->nref[0]=1;
-    }
-    return out;
-}*/
+
 /**
    Creat a X(mat) object to reference an already existing vector.  Free the
    X(mat) object won't free the existing vector.
 */
-X(mat) *X(new_ref)(long nx, long ny, T *p){
-    //return X(new_do)(nx,ny,p,1);
-    return new X(mat)(nx, ny, p, 0);
+X(mat) *X(new_ref)(long nx, long ny, const T *p){
+    return new X(mat)(nx, ny, (T*)p, 0);
 }
 
 /**
    Creat a X(mat) object with already allocated memory chunk. the memory is
    freed when the X(mat) is freed.
 */
-X(mat) *X(new_data)(long nx, long ny, T *p){
-    //return X(new_do)(nx,ny,p,0);
-    return new X(mat)(nx, ny, p, 1);
+X(mat) *X(new_data)(long nx, long ny, const T *p){
+    return new X(mat)(nx, ny, (T*)p, 1);
 }
 
 /**
    Create a new T matrix object. initialized all to zero.
 */
 X(mat) *X(new)(long nx, long ny){
-    //return X(new_do)(nx,ny,NULL,0);
     return new X(mat)(nx, ny);
 }
 /**
@@ -150,18 +126,6 @@ void X(free_do)(X(mat) *A, int keepdata){
 X(mat) *X(ref)(const X(mat) *in){
     if(!in) return NULL;
     return new X(mat)(*in);
-    /*assert_mat(in);
-    X(mat) *out=mycalloc(1,X(mat));
-    memcpy(out,in,sizeof(X(mat)));
-    if(!in->nref){
-	extern quitfun_t quitfun;
-	if(quitfun==&default_quitfun){
-	    warning_once("Referencing non-referenced data. This may cause error.\n");
-	}
-    }else{
-	atomicadd(in->nref, 1);
-    }
-    return out;*/
 }
 /**
    create an new X(mat) reference another with different shape.
@@ -178,9 +142,9 @@ X(mat) *X(ref_reshape)(const X(mat) *in, long nx, long ny){
 
 /**
    creat a new X(mat) referencing columns in existing
-   X(mat). reference counted. not used
+   X(mat). Does not own the data
 */
-X(mat)* X(refcols)(const X(mat) *in, long icol, long ncol){
+X(mat)* X(refcols)(X(mat) *in, long icol, long ncol){
     assert_mat(in);
     return X(new_ref)(in->nx, ncol, PCOL(in, icol));
 }
@@ -394,7 +358,7 @@ T X(sum)(const X(mat) *A){
     T v=0;
     if(A){
 	assert_mat(A);
-	T *restrict p=A->p;
+	const T *restrict p=A->p;
 	/**
 	   Loops like this will only be vectorized with -ffast-math because
 	   different orders of accumulation give different results for floating
@@ -708,13 +672,10 @@ X(cell) *X(cellref)(const X(cell) *in){
     X(cell) *out=X(cellnew)(in->nx, in->ny);
     if(in->m){
 	out->m=X(ref)(in->m);
-	for(int i=0; i<in->nx*in->ny; i++){
-	    out->p[i]=X(new_ref)(in->p[i]->nx, in->p[i]->ny, in->p[i]->p);
-	}
-    }else{
-	for(int i=0; i<in->nx*in->ny; i++){
-	    out->p[i]=X(ref)(in->p[i]);
-	}
+    }
+    
+    for(int i=0; i<in->nx*in->ny; i++){
+	out->p[i]=X(ref)(in->p[i]);
     }
     return out;
 }
@@ -831,8 +792,9 @@ void X(celldropempty)(X(cell) **A0, int dim){
 			warning("row %d dropped\n", ix);
 		    }
 		}
-		free(A->p); free(A);
-		A=B;
+		*A=*B; delete B;
+		/*free(A->p); free(A);
+		  A=B;*/
 	    }
 	}
     }else if(dim==2){
@@ -855,12 +817,13 @@ void X(celldropempty)(X(cell) **A0, int dim){
 		/*warning("Col %d dropped\n", iy); */
 	    }
 	}
-	A->ny=count;
+	//A->ny=count;
 	if(count==0){
 	    X(cellfree)(A);
 	    *A0=NULL;
 	}else{
-	    A->p=myrealloc(A->p,A->ny*A->nx,X(mat)*);
+	    A->Resize(A->nx, count);
+	    //A->p=myrealloc(A->p,A->ny*A->nx,X(mat)*);
 	}
     }else{
 	error("Invalid dim: %d\n",dim);
@@ -872,7 +835,7 @@ void X(celldropempty)(X(cell) **A0, int dim){
 /**
    convert a vector to cell using dimensions specified in dims. Reference the vector
 */
-X(cell)* X(2cellref)(const X(mat) *A, long*dims, long ndim){
+X(cell)* X(2cellref)(X(mat) *A, long*dims, long ndim){
     long nx=0;
     for(int ix=0; ix<ndim; ix++){
 	nx+=dims[ix];

@@ -24,19 +24,19 @@
 #include "random.h"
 
 #define dspfree(A)      {dspfree_do(A); A=NULL;}
-#define dspcellfree(A)  {dspcellfree_do(A); A=NULL;}
+#define dspcellfree(A)  {cellfree_do(A); A=NULL;}
 #define PDSPCELL(M,P)  dsp* (*restrict P)[(M)->nx]=(dsp*(*)[(M)->nx])(M)->p
 
 #define sspfree(A)      {sspfree_do(A); A=NULL;}
-#define sspcellfree(A)  {sspcellfree_do(A); A=NULL;}
+#define sspcellfree(A)  {cellfree_do(A); A=NULL;}
 #define PSSPCELL(M,P)   ssp* (*restrict P)[(M)->nx]=(ssp*(*)[(M)->nx])(M)->p
 
 #define cspfree(A)     {cspfree_do(A); A=NULL;}
-#define cspcellfree(A) {cspcellfree_do(A); A=NULL;}
+#define cspcellfree(A) {cellfree_do(A); A=NULL;}
 #define PCSPCELL(M,P)  csp* (*restrict P)[(M)->nx]=(csp*(*)[(M)->nx])(M)->p
 
 #define zspfree(A)     {zspfree_do(A); A=NULL;}
-#define zspcellfree(A) {zspcellfree_do(A); A=NULL;}
+#define zspcellfree(A) {cellfree_do(A); A=NULL;}
 #define PZSPCELL(M,P)  zsp* (*restrict P)[(M)->nx]=(zsp*(*)[(M)->nx])(M)->p
 
 #define AOS_SP_DEF(X,T,R,RI) \
@@ -46,7 +46,7 @@ X(sp) *X(spdup)(const X(sp) *A) CHECK_UNUSED_RESULT;\
 X(sp) *X(spnew2)(const X(sp) *A) CHECK_UNUSED_RESULT;\
 X(sp) *X(spnewrandu)(int nx, int ny, const T mean, R fill,rand_t *rstat) CHECK_UNUSED_RESULT;\
 X(sp) *X(SP)(TwoDim*)  CHECK_UNUSED_RESULT;\
-void X(spsetnzmax)(X(sp) *sp, long nzmax);\
+int X(spsetnzmax)(X(sp) *sp, long nzmax);\
 X(sp)* X(sp_cast)(const TwoDim *A);\
 void X(spfree_do)(X(sp) *sp);\
 void X(spdisp)(const X(sp) *sp);\

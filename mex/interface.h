@@ -201,7 +201,6 @@ dsp *mx2dsp(const mxArray *A){
     if(A && mxGetM(A) && mxGetN(A)){
 	out=(dsp*)calloc(1, sizeof(dsp));
 	out->id=M_DSP64;
-	out->nz=-1;
 	out->nx=mxGetM(A);
 	out->ny=mxGetN(A);
 	out->p=(spint*)mxGetJc(A);
@@ -218,7 +217,6 @@ csp *mx2csp(const mxArray *A){
     if(A && mxGetM(A) && mxGetN(A)){
 	out=(csp*)calloc(1, sizeof(csp));
 	out->id=M_CSP64;
-	out->nz=-1;
 	out->nx=mxGetM(A);
 	out->ny=mxGetN(A);
 	out->p=(spint*)mxGetJc(A);
@@ -231,7 +229,8 @@ csp *mx2csp(const mxArray *A){
 #endif
 loc_t *mx2loc(const mxArray *A){
     if(!mxIsDouble(A)) error("Only double is supported\n");
-    loc_t *loc=(loc_t*)calloc(1, sizeof(loc_t));
+    //loc_t *loc=(loc_t*)calloc(1, sizeof(loc_t));
+    loc_t *loc=new loc_t;
     //loc->nref=(int*)malloc(sizeof(int)); loc->nref[0]=0;
     loc->locx=mxGetPr(A);
     loc->nloc=mxGetM(A);

@@ -74,42 +74,54 @@ struct Magic<long int>{//always 64 bit int. long is not.
 
 /**
    RefP is a reference counting for pointers. 
+
+   It can be used to store dynamically allocated memory and use as a regular
+   pointer. When passing around, it will do automatically reference accounting
+   and release the memory when the last reference is released.
+
+   It can store different kind of dynamic memory:
+   1) heap memory
+   2) GPU memory (cuda)
+   3) pinned memory (paged locked, cuda)
+   4) mmaped from file or shared memory.
 */
-template <typename T, template<typename> class Dev>
+
+template <typename T, template<typename> class Dev=Cpu>
 class RefP{
 private:
     Dev<T> *p0; //The allocated memory address. p>=p0;
     int *nref;  //The reference counter. Delete p0 only if nref is valid and has value of 1.
+    long n;
 protected:
     T *p;  //The memory address for access
-private:
-    void _init(long n){
-	if(n>0){
-	    p0=new Dev<T>[n];
-	    nref=new int;
-	    nref[0]=1;
-	}
-	p=(T*)p0;
-    }
-    void _deinit(){
+ 
+public:
+    void deinit(){
 	if(nref && !atomicadd(nref, -1)){
 	    delete[] p0;
 	    delete nref;
 	}
 	p0=0;
 	nref=0;
+	n=0;
+	p=0;
     }
-public:
+
     //Constructors and related
-    RefP():p0(0),nref(0),p(0){
+    RefP():p0(0),nref(0),n(0),p(0){
     }
-    RefP(long n, T *pin=0, int own=1):p0((Dev<T>*)pin),nref(0){
+    //Interface to be deprecated /todo cast from T to Dev<T> is dangerous.
+    RefP(long ni, T *pin=0, int own=1):p0((Dev<T>*)pin),nref(0),n(ni){
 	if(n>0){
 	    if(!p0){
+		//Need to use new because T may be class types
 		p0=new Dev<T>[n];
 		own=1;
 	    }
 	    if(own){
+		if(own>1){
+		    error("This is not enticipated\n");
+		}
 		nref=new int;
 		nref[0]=1;
 	    }
@@ -117,21 +129,31 @@ public:
 	p=(T*)p0;
     }
     //Create a new pointer with offset for p.
-    RefP(const RefP& pin, long offset=0):p0(pin.p0),nref(pin.nref),p(pin.p+offset){
+    RefP(const RefP& pin, long offset=0):p0(pin.p0),nref(pin.nref),n(pin.n),p(pin.p+offset){
 	if(nref) atomicadd(nref, 1);
     }
-    
+ 
     RefP &operator=(const RefP &in){
 	if(this!=&in){
-	    p=in.p;
+	    deinit();
 	    p0=in.p0;
 	    nref=in.nref;
+	    n=in.n;
+	    p=in.p;
 	    if(nref) atomicadd(nref, 1);
 	}
 	return *this;
     }
-    void init(long n=0){
-	_deinit();
+    RefP &operator=(T*in){
+	deinit();
+	p0=0;
+	nref=0;
+	p=in;
+	return *this;
+    }
+    void init(long ni=0){
+	deinit();
+	n=ni;
 	if(n>0){
 	    p0=new Dev<T>[n];
 	    nref=new int;
@@ -140,13 +162,30 @@ public:
 	p=(T*)p0;	
     }
     //Destructors and related
-    virtual ~RefP(){
-	_deinit();
+    ~RefP(){
+	deinit();
     }
-    //Replace vector
+    //Replace vector without reference counting.
     void Replace(T* pnew){
-	_deinit();
+	deinit();
 	p=pnew;
+    }
+    //Resize the memory. We use element-wise copy because T may be class time
+    void Resize(long ni){
+	if(nref && *nref==1){
+	    long offset=p-(T*)p0;
+	    Dev<T> *p0new=new Dev<T>[ni];
+	    long nmin=MIN(n, ni);
+	    for(long i=0; i<nmin; i++){
+		p0new[i]=p0[i];
+	    }
+	    delete[] p0;
+	    p0=p0new;
+	    n=ni;
+	    p=(T*)p0+offset;
+	}else{
+	    error("Canot Resize referenced or not owned data.\n");
+	}
     }
     //Access operators
     //() operator
@@ -156,32 +195,41 @@ public:
     const T* operator()() const{
 	return (T*)p;
     }
-    //conversion operator
+    //conversion operator. Automatically satisfying [] operator
     operator T*(){
 	return (T*)p;
     }
     operator const T*()const{
 	return (T*)p;
     }
+    //indexing operator
     T& operator()(int i){
+	assert(i>=0 && i<n);
 	return p[i];
     }
     const T& operator()(int i)const{
+	assert(i>=0 && i<n);
 	return p[i];
     }
+    //comparison
     bool operator==(const RefP&in){
 	return p==in.p;
     }
-    T*operator+(int i){
+    //ponter offset
+    /*T*operator+(int i){
 	return p+i;
     }
     const T* operator+(int i)const {
 	return p+i;
-    }
-    long RefCount()const{
+	}*/
+    long RefCount() const{
 	return nref?nref[0]:0;
     }
 };
+
+/**
+   Base class for arrays and cells. 
+ */
 class TwoDim{
 public://temporary. for backward compatibility before conversion is done. /todo
     uint32_t id;
@@ -189,7 +237,7 @@ public://temporary. Change to protected after conversion is done. /todo
     long nx;
     long ny;
 public:
-    TwoDim(long nxi=0, long nyi=1):nx(nxi), ny(nyi){}
+    TwoDim(long nxi=0, long nyi=1):id(0),nx(nxi),ny(nyi){}
     long Nx()const{
 	return nx;
     }
@@ -205,13 +253,18 @@ public:
     bool operator==(const TwoDim &in){
 	return nx==in.nx && ny==in.ny;
     }
+    //make the class polymorphic
+    virtual ~TwoDim(){}
 };
 /**
    Generic array of basic types and classes.
 */
 template <typename T, template<typename> class Dev=Cpu>
-class Array:public TwoDim, public RefP<T, Dev>{
+class Array:public TwoDim{
+//, public RefP<T, Dev>{
     typedef RefP<T, Dev> RefPT;
+public:
+    RefPT p;
 public:
     std::string desc;
 public: //temporary for backward compatibility before conversion is done. /todo
@@ -219,49 +272,80 @@ public: //temporary for backward compatibility before conversion is done. /todo
     struct fft_t *fft;
     char *header; //temporary for backward compatibility. Convert to desc. /todo
 public:
-    using RefPT::operator();
-    using RefPT::p;
-    
-    T&operator ()(int ix, int iy){
+    //using RefPT::operator();
+    //using RefPT::p;
+
+    T*operator()(){
+	return p();
+    }
+    const T*operator()()const{
+	return p();
+    }
+
+    operator T*(){
+	return p();
+    }
+    operator const T*()const {
+	return p();
+    }
+
+
+    T&operator ()(long ix, long iy){
+	assert(ix>=0 && ix<nx && iy>=0 && iy<ny);
 	return p[ix+nx*iy];
     }
-    const T&operator ()(int ix, int iy)const{
+    const T&operator ()(long ix, long iy)const{
+	assert(ix>=0 && ix<nx && iy>=0 && iy<ny);
 	return p[ix+nx*iy];
     }
     bool operator==(const Array&in){
 	return RefPT::operator==(in) && TwoDim::operator==(in);
     }
     T *Col(int icol){
+	assert(icol>=0 && icol<ny);
 	return p+nx*icol;
     }
     const T *Col(int icol)const{
+	assert(icol>=0 && icol<ny);
 	return p+nx*icol;
     }
  
     void init(long nxi=0, long nyi=1){
 	nx=nxi;
 	ny=nyi;
-	RefPT::init(nxi*nyi);
+	p.init(nxi*nyi);
+    }
+    virtual void deinit(){
+	p.deinit();
+	nx=0;
+	ny=0;
     }
     virtual ~Array(){
 	if(!mmap) free(header);
+	//dfft_free_plan(fft);//temporary;/todo
+	/*if(std::is_pointer<T>::value){
+	    info("T is pointer\n");
+	    for(long i=0; i<nx*ny; i++){
+		delete (*this)[i];
+	    }
+	    }*/
     }
     //Constructors 
-    explicit Array(long nxi=0, long nyi=1, T *pi=NULL, int own=1)
-	:TwoDim(nxi, nyi),RefPT(nxi*nyi, pi, own){
+    explicit Array(long nxi=0, long nyi=1, T *pi=NULL, long own=1)
+	:TwoDim(nxi, nyi),p(nxi*nyi, pi, own){
 	fft=0;
 	header=0;
 	id=Magic<T>::magic;
     }
     //Create a reference with offset.
-    Array(long nxi,long nyi,const RefPT& pi,long offset=0)
-	:TwoDim(nxi, nyi),RefPT(pi,offset){
+    Array(long nxi,long nyi,const Array& pi,long offset=0)
+	:TwoDim(nxi, nyi),p(pi.p,offset){
 	fft=0;
 	header=0;
 	id=Magic<T>::magic;
     }
     //Copy constructor
-    Array(const Array &in):TwoDim(in),RefPT(in),desc(in.desc),mmap(in.mmap){
+    Array(const Array &in):TwoDim(in),p(in.p),desc(in.desc),mmap(in.mmap){
 	fft=0;
 	header=0;
 	id=Magic<T>::magic;
@@ -270,7 +354,8 @@ public:
     //Copy assignment operator
     Array &operator=(const Array &in){
 	if(this!=&in){
-	    RefPT::operator=(in);
+	    p=in.p;
+	    //RefPT::operator=(in);
 	    nx=in.nx;
 	    ny=in.ny;
 	    desc=in.desc;
@@ -297,7 +382,7 @@ public:
     }
     //Replace underlining vector
     void Replace(T* pnew){
-	RefPT::Replace(pnew);
+	p.Replace(pnew);
     }
 };
 

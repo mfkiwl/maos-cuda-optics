@@ -30,9 +30,9 @@ W01_T::W01_T(const dsp *R_W0, const dmat *R_W1, int R_nxx){
     if(1){
 	/*W0 of partially illuminates points are stored as sparse matrix in W0f in
 	  GPU. W0 of fully illuminated points are stored in W0p.*/
-	spint *pp=R_W0->p;
-	spint *pi=R_W0->i;
-	double *px=R_W0->x;
+	const spint *pp=R_W0->p;
+	const spint *pi=R_W0->i;
+	const double *px=R_W0->x;
 	dsp *W0new=dspnew(R_W0->nx, R_W0->ny, R_W0->nzmax);
 	spint *pp2=W0new->p;
 	spint *pi2=W0new->i;

@@ -111,8 +111,12 @@ public:
     CuCell(long nxi, long nyi, long mx, long my, T *pin=NULL):Parent(nxi,nyi, mx, my, pin){
 	p2pm();
     }
-    template <typename L>
-    CuCell(const long nxi, const long nyi, L *mx, L *my, T *pin=NULL):Parent(nxi,nyi,mx, my, pin){
+    //template <typename L>
+    CuCell(const long nxi, const long nyi, int *mx, int *my, T *pin=NULL):Parent(nxi,nyi,mx, my, pin){
+	p2pm();
+    }
+    //template <typename L>
+    CuCell(const long nxi, const long nyi, long *mx, long *my, T *pin=NULL):Parent(nxi,nyi,mx, my, pin){
 	p2pm();
     }
     CuCell& operator=(const CuCell<T>&A){
