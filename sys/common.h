@@ -53,7 +53,9 @@ void default_quitfun(const char *msg);
 using std::signbit;
 using std::isfinite;
 #endif
-//using std::isnan;
+#if __GNUC__ >= 8
+using std::isnan;
+#endif
 using std::strerror;
 using std::pow;
 #else//C99 mode or CUDA.

@@ -235,7 +235,7 @@ case "$CN" in
 		COMMON_GCC+=" -Wno-format-truncation -Wno-misleading-indentation -Wimplicit-fallthrough=2"
 	    fi
 	    if test "$major" -ge 8 ;then
-		COMMON_GCC+=" -Wno-cast-function-type"
+		COMMON_GCC+=" -Wno-cast-function-type -Wno-parentheses"
 	    fi
 	    #GCC4.3 changed meaning of inline to C99
 	    #if test $major -eq 4 -a $minor -lt 5;then
@@ -480,7 +480,7 @@ compile(){
     fnlog=${TMP_DIR}/compile.log
     echo "Compiling $name. Check $fnlog for details"
     echo CFLAGS=$CFLAGS > $fnlog
-    if (cd ${TMP_DIR}/$name/* && export CFLAGS="$CFLAGS -O3"  && \
+    if (cd ${TMP_DIR}/$name/* && export CFLAGS="-DDLONG -O3"  && \
 	(./configure --libdir=${LIB_DIR} $@ --prefix=${PRE_DIR} >> $fnlog 2>&1|| \
 	cmake -DCMAKE_INSTALL_PREFIX:PATH=${PRE_DIR} $@ >> $fnlog 2>&1 ) && \
 	make -j4 install >> $fnlog 2>&1) ;then

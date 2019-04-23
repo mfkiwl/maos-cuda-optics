@@ -250,7 +250,8 @@ X(mat)* X(cat)(const X(mat) *in1, const X(mat) *in2, int dim){
 */
 void X(zero)(X(mat)*A){
     if(A){
-	memset(A->p, 0, sizeof(T)*A->nx*A->ny);
+        //memset(A->p, 0, sizeof(T)*A->nx*A->ny);
+      std::fill(A->p(), A->p()+A->nx*A->ny, (T)0);
     }
 }
 /**
@@ -259,7 +260,8 @@ void X(zero)(X(mat)*A){
 void X(zerocol)(X(mat)*A, int icol){
     if(A){
 	assert(icol>=0 && icol<A->ny);
-	memset(PCOL(A, icol), 0, sizeof(T)*A->nx);
+	//memset(PCOL(A, icol), 0, sizeof(T)*A->nx);
+	std::fill(PCOL(A, icol), PCOL(A, icol+1), T{});
     }
 }
 /**
@@ -544,7 +546,8 @@ void X(cpcorner2center)(X(mat) *A, const X(mat)*B){
     const long ninx=B->nx;
     const long niny=B->ny;
     if(nx>ninx || ny>niny){
-	memset(Ap, 0, sizeof(T)*nx*ny);
+        //memset(Ap, 0, sizeof(T)*nx*ny);
+        X(zero)(A);
     }
     const T * Bp=B->p;
     assert((nx&1)==0 && (ny&1)==0 && (ninx&1)==0 && (niny&1)==0);

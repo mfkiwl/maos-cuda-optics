@@ -2252,7 +2252,7 @@ static void setup_parms_postproc_recon(PARMS_T *parms){
     }
   
     if(parms->recon.glao){
-	parms->wfsr=mycalloc(parms->npowfs,WFS_CFG_T);
+	parms->wfsr=mycalloc((uint)parms->npowfs,WFS_CFG_T);
 	parms->nwfsr=parms->npowfs;
 	for(int ipowfs=0; ipowfs<parms->npowfs; ipowfs++){
 	    parms->wfsr[ipowfs].thetax=0;

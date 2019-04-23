@@ -365,10 +365,11 @@ public:
     }
     //Convert matrix into Vector
     Array Vector(){
-	Array tmp=*this;
+	return Array(nx*ny,1, *this, 0);
+	/*Array tmp=*this;
 	tmp.nx=tmp.nx*tmp.ny;
 	tmp.ny=1;
-	return tmp;
+	return tmp;*/
     }
     //Resize array in place
     void Resize(long nxi, long nyi){

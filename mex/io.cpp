@@ -102,13 +102,13 @@ static char* procfn(const char *fn, const char *mod){
     int nosuffix=0;
     if(!check_suffix(fn2,".bin") && !check_suffix(fn2, ".bin.gz")
        &&!check_suffix(fn2,".fits") && !check_suffix(fn2, ".fits.gz")){
-	strncat(fn2, ".bin", 4);
+	strcat(fn2, ".bin");
 	nosuffix=1;
     }
     if(mod[0]=='r' || mod[0]=='a'){
 	if(!exist(fn2)){/*If does not exist.*/
 	    if(!check_suffix(fn2, ".gz")){
-		strncat(fn2, ".gz", 3);
+		strcat(fn2, ".gz");
 	    }else if (check_suffix(fn, ".gz")){
 		/*ended with bin.gz, change to .bin*/
 		fn2[strlen(fn2)-3]='\0';
@@ -116,7 +116,7 @@ static char* procfn(const char *fn, const char *mod){
 	    if(!exist(fn2)){
 		if(nosuffix){
 		    fn2[strlen(fn2)-7]='\0';/*remove the added .bin, .gz*/
-		    strncat(fn2, ".fits", 5);/*replace with .fits*/
+		    strcat(fn2, ".fits");/*replace with .fits*/
 		    if(!exist(fn2)){
 			return NULL;
 		    }
@@ -565,7 +565,7 @@ write_fits_header(file_t *fp, const char *str, uint32_t magic, uint64_t ndim, mw
 	    }
 	    if(length>70) length=70;
 	    FLUSH_OUT;
-	    strncpy(header[hc], "COMMENT   ", 10);
+	    strcpy(header[hc], "COMMENT   ");
 	    strncpy(header[hc]+10, str, length);
 	    if(nl){
 		header[hc][10+length-1]=';';

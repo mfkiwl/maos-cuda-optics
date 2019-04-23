@@ -89,14 +89,14 @@ static char* procfn(const char *fn, const char *mod){
     /*If there is no recognized suffix, add .bin in the end. */
     if(!check_suffix(fn2,".bin")  && !check_suffix(fn2, ".bin.gz")
        && !check_suffix(fn2,".fits") && !check_suffix(fn2, ".fits.gz")){
-	strncat(fn2, ".bin", 4);
+	strcat(fn2, ".bin");
     }
     if(mod[0]=='r'){
 	char *fnr=NULL;
 	if(!(fnr=search_file(fn2))){/*If does not exist. */
 	    if(!check_suffix(fn2, ".gz")){
 		/*does not end with .gz, add gz*/
-		strncat(fn2, ".gz", 3);
+		strcat(fn2, ".gz");
 	    }else if (check_suffix(fn, ".gz")){
 		/*ended with gz, remove .gz*/
 		fn2[strlen(fn2)-3]='\0';
@@ -678,7 +678,7 @@ write_fits_header(file_t *fp, const char *str, uint32_t magic, int count, ...){
 		header[hc][9]=' ';
 		strncpy(header[hc]+10, eq+1, length);
 	    }else{
-		strncpy(header[hc], "COMMENT   ", 10);
+		strncpy(header[hc], "COMMENT   ", 11);
 		strncpy(header[hc]+10, str, length);
 	    }
 	    if(nl){//Replace \n by ;

@@ -110,8 +110,7 @@ static void calc_gradol(SIM_T *simu){
   	if(parms->powfs[ipowfs].psol){
 	    if((simu->reconisim+1) % parms->powfs[ipowfs].dtrat == 0){/*Has output. */
 		int nindwfs=parms->recon.glao?1:parms->powfs[ipowfs].nwfs;
-		//OMPTASK_FOR(indwfs, 0, nindwfs){
-		for(int indwfs=0; indwfs<nindwfs; indwfs++){
+		OMPTASK_FOR(indwfs, 0, nindwfs){
 		    int iwfs=parms->recon.glao?ipowfs:parms->powfs[ipowfs].wfs->p[indwfs];
 		    dcp(&simu->gradlastol->p[iwfs], simu->gradlastcl->p[iwfs]);
 		    for(int idm=0; idm<parms->ndm && simu->wfspsol->p[ipowfs]; idm++){
@@ -119,19 +118,7 @@ static void calc_gradol(SIM_T *simu){
 			      simu->wfspsol->p[ipowfs]->p[idm], "nn", 1);
 		    }
 		}
-	    //OMPTASK_END;
-		if(simu->reconisim<20 && 0){
-		    dmat *tmp=0;
-		    int iwfs=parms->recon.glao?ipowfs:parms->powfs[ipowfs].wfs->p[0];
-		    for(int idm=0; idm<parms->ndm && simu->wfspsol->p[ipowfs]; idm++){
-			dspmm(&tmp, P(GA,iwfs,idm), simu->wfspsol->p[ipowfs]->p[idm], "nn", 1);
-		    }
-		    writebin(simu->gradlastcl, "lastcl_%d", simu->reconisim);
-		    writebin(simu->gradlastol, "lastol_%d", simu->reconisim);
-		    writebin(tmp, "gradpsol_%d", simu->reconisim);
-		    writebin(simu->wfspsol, "wfspsol_%d", simu->reconisim);
-		    delete tmp;
-		}
+		OMPTASK_END;
 	    }
 	}
     }

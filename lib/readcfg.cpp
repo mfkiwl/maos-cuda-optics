@@ -285,7 +285,7 @@ void open_config(const char* config_in, /**<[in]The .conf file to read*/
 	    if(len+1>MAXLN){
 		error("Input line is too long. Please make MAXLN larger to accomodate.\n");
 	    }
-	    strncpy(line, config_line, len);
+	    strcpy(line, config_line);
 	    line[len]='\0';
 	    if(p0){
 		config_line=p0+1;

@@ -87,7 +87,8 @@ void X(embed_wvf)(X(mat) *restrict A, const R *opd, const R *amp,
     const int npsfy=A->ny;
  
     R wvk=2.*M_PI/wvl;
-    memset(psf, 0, sizeof(T)*npsfx*npsfy);
+    X(zero)(A);
+    //memset(psf, 0, sizeof(T)*npsfx*npsfy);
     if(fabs(theta)<1.e-10){/*no rotation. */
 	const int skipx=(npsfx-nopdx)/2;
 	const int skipy=(npsfy-nopdy)/2;
@@ -460,7 +461,8 @@ void X(cpcorner)(X(mat) *A, const X(mat) *restrict B, CEMBED flag){
     T *psfout=A->p;
     const T *restrict psfin=B->p;
     assert((nx&1)==0 && (ny&1)==0 && (ninx&1)==0 && (niny&1)==0);
-    memset(psfout, 0, sizeof(T)*nx*ny);
+    //memset(psfout, 0, sizeof(T)*nx*ny);
+    X(zero)(A);
     const int ny2=(ny<niny)?ny/2:niny/2;
     const int nx2=(nx<ninx)?nx/2:ninx/2;
 

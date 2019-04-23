@@ -270,7 +270,6 @@ long count_nonzero(const lmat *in){
 	    if(in->p[i]){
 		count++;
 	    }
-
 	}
     }
     return count;

@@ -249,22 +249,22 @@ void register_deinit(void (*fun)(void), void *data){
     }
 }
 #ifdef __cpluspluc
-unamespace std{
+//unamespace std{
 #endif
-    void* malloc_maos(size_t size){
+    void* malloc(size_t size){
 	return mem_debug?malloc_custom(size):malloc_default(size);
     }
-    void *calloc_maos(size_t size, size_t nmemb){
+    void *calloc(size_t size, size_t nmemb){
 	return mem_debug?calloc_custom(size, nmemb):calloc_default(size,nmemb);
     }
-    void* realloc_maos(void *p, size_t size){
+    void* realloc(void *p, size_t size){
 	return mem_debug?realloc_custom(p, size):realloc_default(p,size);
     }
-    void free_maos(void *p){
+    void free(void *p){
 	if(mem_debug) free_custom(p); else free_default(p);
     }
 #ifdef __cpluspluc
-}
+//}
 #endif
 void print_mem(){
     if(MROOT){

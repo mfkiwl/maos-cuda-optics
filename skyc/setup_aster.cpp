@@ -840,7 +840,7 @@ int setup_aster_select(double *result, ASTER_S *aster, int naster, STAR_S *star,
 		if(parms->skyc.estimate && parms->skyc.nsky==1){
 		    char temp2[1024];
 		    snprintf(temp2, 1023,"(x=%.1f, y=%.1f, J=%.1f) ", star[istar].thetax*206265, star[istar].thetay*206265, star[istar].mags->p[0]);
-		    strncat(temp1, temp2, 1023);
+		    strcat(temp1, temp2);
 		}
 	    }
 	    if(parms->skyc.estimate){
