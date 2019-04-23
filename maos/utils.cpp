@@ -679,7 +679,7 @@ void lgs_wfs_sph_psd(const PARMS_T *parms, POWFS_T *powfs, RECON_T *recon, const
     double pixthetay=parms->powfs[ipowfs].pixtheta;
     const int wfsind=parms->powfs[ipowfs].wfsind->p[iwfs];
     double *srot=(parms->powfs[ipowfs].radpix)?
-	powfs[ipowfs].srot->p[powfs[ipowfs].srot->ny>1?wfsind:0]->p():NULL;
+	powfs[ipowfs].srot->p[powfs[ipowfs].srot->ny>1?wfsind:0]->p:NULL;
     for(int icol=0; icol<1000; icol+=dtrat){
 	setup_powfs_etf(powfs, parms, ipowfs, 0, icol);
 	gensei(parms, powfs, ipowfs);
@@ -993,7 +993,7 @@ void calc_phygrads(dmat **pgrad, dmat *ints[], const PARMS_T *parms, const POWFS
 	    i0sumg=powfs[ipowfs].intstat->i0sumsum->p[wfsind];
 	    }
 	    }*/
-    const double *srot=(parms->powfs[ipowfs].radpix)?PR(powfs[ipowfs].srot, wfsind, 0)->p():NULL;
+    const double *srot=(parms->powfs[ipowfs].radpix)?PR(powfs[ipowfs].srot, wfsind, 0)->p:NULL;
     double pixthetax=parms->powfs[ipowfs].radpixtheta;
     double pixthetay=parms->powfs[ipowfs].pixtheta;
     /*output directly to simu->gradcl. replace */

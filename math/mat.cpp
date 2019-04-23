@@ -251,7 +251,7 @@ X(mat)* X(cat)(const X(mat) *in1, const X(mat) *in2, int dim){
 void X(zero)(X(mat)*A){
     if(A){
         //memset(A->p, 0, sizeof(T)*A->nx*A->ny);
-      std::fill(A->p(), A->p()+A->nx*A->ny, (T)0);
+      std::fill(A->p, A->p+A->nx*A->ny, (T)0);
     }
 }
 /**

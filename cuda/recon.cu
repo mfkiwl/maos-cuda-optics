@@ -54,20 +54,20 @@ namespace cuda_recon{
        || (parms->recon.alg==1 && parms->gpu.lsr)
 	){
 	if(parms->recon.alg==0 && parms->fit.square){
-	    dmfit=curcell(parms->ndm, 1, recon->anx->p(), recon->any->p());
+	    dmfit=curcell(parms->ndm, 1, recon->anx->p, recon->any->p);
 	}else if(parms->recon.modal){
-	    dmfit=curcell(parms->ndm, 1, recon->anmod->p(), (long*)NULL);
+	    dmfit=curcell(parms->ndm, 1, recon->anmod->p, (long*)NULL);
 	}else{
-	    dmfit=curcell(parms->ndm, 1, recon->anloc->p(), (long*)NULL);
+	    dmfit=curcell(parms->ndm, 1, recon->anloc->p, (long*)NULL);
 	}
     }
 
     if(parms->recon.alg==0 && (parms->gpu.tomo || parms->gpu.fit)
        && !parms->sim.idealfit && !parms->load.mvm){
 	if(parms->tomo.square){
-	    opdr=curcell(recon->npsr, 1, recon->xnx->p(), recon->xny->p());
+	    opdr=curcell(recon->npsr, 1, recon->xnx->p, recon->xny->p);
 	}else{
-	    opdr=curcell(recon->npsr, 1, recon->xnloc->p(), (long*)NULL);
+	    opdr=curcell(recon->npsr, 1, recon->xnloc->p, (long*)NULL);
 	}
 	opdr_vec=curcell(recon->npsr, 1);
 	for(int ips=0; ips<recon->npsr; ips++){

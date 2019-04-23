@@ -96,7 +96,7 @@ protected:
     T *p;  //The memory address for access
  
 public:
-    void deinit(){
+    virtual void deinit(){
 	if(nref && !atomicadd(nref, -1)){
 	    delete[] p0;
 	    delete nref;
@@ -162,7 +162,7 @@ public:
 	p=(T*)p0;	
     }
     //Destructors and related
-    ~RefP(){
+    virtual ~RefP(){
 	deinit();
     }
     //Replace vector without reference counting.
@@ -215,7 +215,7 @@ public:
     bool operator==(const RefP&in){
 	return p==in.p;
     }
-    //ponter offset
+    //pointer offset
     /*T*operator+(int i){
 	return p+i;
     }
@@ -238,6 +238,7 @@ public://temporary. Change to protected after conversion is done. /todo
     long ny;
 public:
     TwoDim(long nxi=0, long nyi=1):id(0),nx(nxi),ny(nyi){}
+    TwoDim(const TwoDim &in):id(in.id),nx(in.nx),ny(in.ny){}
     long Nx()const{
 	return nx;
     }
@@ -260,11 +261,8 @@ public:
    Generic array of basic types and classes.
 */
 template <typename T, template<typename> class Dev=Cpu>
-class Array:public TwoDim{
-//, public RefP<T, Dev>{
-    typedef RefP<T, Dev> RefPT;
-public:
-    RefPT p;
+class Array:public TwoDim, public RefP<T, Dev>{
+    typedef RefP<T, Dev> Parent;
 public:
     std::string desc;
 public: //temporary for backward compatibility before conversion is done. /todo
@@ -272,24 +270,9 @@ public: //temporary for backward compatibility before conversion is done. /todo
     struct fft_t *fft;
     char *header; //temporary for backward compatibility. Convert to desc. /todo
 public:
-    //using RefPT::operator();
-    //using RefPT::p;
-
-    T*operator()(){
-	return p();
-    }
-    const T*operator()()const{
-	return p();
-    }
-
-    operator T*(){
-	return p();
-    }
-    operator const T*()const {
-	return p();
-    }
-
-
+    using Parent::operator();
+    using Parent::p;
+ 
     T&operator ()(long ix, long iy){
 	assert(ix>=0 && ix<nx && iy>=0 && iy<ny);
 	return p[ix+nx*iy];
@@ -299,7 +282,7 @@ public:
 	return p[ix+nx*iy];
     }
     bool operator==(const Array&in){
-	return RefPT::operator==(in) && TwoDim::operator==(in);
+	return Parent::operator==(in) && TwoDim::operator==(in);
     }
     T *Col(int icol){
 	assert(icol>=0 && icol<ny);
@@ -311,12 +294,12 @@ public:
     }
  
     void init(long nxi=0, long nyi=1){
+	Parent::init(nxi*nyi);
 	nx=nxi;
 	ny=nyi;
-	p.init(nxi*nyi);
     }
     virtual void deinit(){
-	p.deinit();
+	Parent::deinit();
 	nx=0;
 	ny=0;
     }
@@ -332,20 +315,20 @@ public:
     }
     //Constructors 
     explicit Array(long nxi=0, long nyi=1, T *pi=NULL, long own=1)
-	:TwoDim(nxi, nyi),p(nxi*nyi, pi, own){
+	:TwoDim(nxi, nyi),Parent(nxi*nyi, pi, own){
 	fft=0;
 	header=0;
 	id=Magic<T>::magic;
     }
     //Create a reference with offset.
     Array(long nxi,long nyi,const Array& pi,long offset=0)
-	:TwoDim(nxi, nyi),p(pi.p,offset){
+	:TwoDim(nxi, nyi),Parent(pi,offset){
 	fft=0;
 	header=0;
 	id=Magic<T>::magic;
     }
     //Copy constructor
-    Array(const Array &in):TwoDim(in),p(in.p),desc(in.desc),mmap(in.mmap){
+    Array(const Array &in):TwoDim(in),Parent(in),desc(in.desc),mmap(in.mmap){
 	fft=0;
 	header=0;
 	id=Magic<T>::magic;
@@ -354,8 +337,7 @@ public:
     //Copy assignment operator
     Array &operator=(const Array &in){
 	if(this!=&in){
-	    p=in.p;
-	    //RefPT::operator=(in);
+	    Parent::operator=(in);
 	    nx=in.nx;
 	    ny=in.ny;
 	    desc=in.desc;
@@ -383,7 +365,7 @@ public:
     }
     //Replace underlining vector
     void Replace(T* pnew){
-	p.Replace(pnew);
+	Parent::Replace(pnew);
     }
 };
 

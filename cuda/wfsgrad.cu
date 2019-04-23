@@ -465,6 +465,10 @@ void gpu_wfsgrad_queue(thread_t *info){
 		}else{
 		    cuspmul(gradref, cuwfs[iwfs].GS0, phiout, 1, 'n', ratio, stream);
 		}
+		/*{
+		    cuwrite(gradref, "gradref.bin");
+		    exit(0);
+		    }*/
 		if(gradacc()!=gradref()){
 		    curadd(gradacc, 1, gradref, 1.f/(Real)dtrat, stream);
 		}

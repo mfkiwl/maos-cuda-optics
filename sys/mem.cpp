@@ -23,13 +23,15 @@
 #include <execinfo.h>
 #endif
 #include <sys/stat.h>
-
+#include <dlfcn.h>
 int exit_fail=0;
 #define IN_MEM_C 1
 #include "mem.h"
 #include "thread.h"
 #include "scheduler_client.h"
 #include "process.h"
+
+#include "misc.h"
 /*
   Record allocated memory and their size.  Warn if some memory is not freed.
   Notice that the pointer return by tsearch and the pointer passwd to the
@@ -45,8 +47,6 @@ int exit_fail=0;
   matlab, the memory allocations are replaced by matlab equivalents to have
   matlab manage the memory during referencing..
   */
-#include <dlfcn.h>
-#include "misc.h"
 
 void *(*calloc_default)(size_t, size_t);
 void *(*malloc_default)(size_t);
@@ -248,24 +248,26 @@ void register_deinit(void (*fun)(void), void *data){
 	UNLOCK(mutex_mem);
     }
 }
+
 #ifdef __cpluspluc
-//unamespace std{
+unamespace std{
 #endif
-    void* malloc(size_t size){
+    void* malloc_maos(size_t size){
 	return mem_debug?malloc_custom(size):malloc_default(size);
     }
-    void *calloc(size_t size, size_t nmemb){
+    void *calloc_maos(size_t size, size_t nmemb){
 	return mem_debug?calloc_custom(size, nmemb):calloc_default(size,nmemb);
     }
-    void* realloc(void *p, size_t size){
+    void* realloc_maos(void *p, size_t size){
 	return mem_debug?realloc_custom(p, size):realloc_default(p,size);
     }
-    void free(void *p){
+    void free_maos(void *p){
 	if(mem_debug) free_custom(p); else free_default(p);
     }
 #ifdef __cpluspluc
-//}
+}
 #endif
+
 void print_mem(){
     if(MROOT){
 	warning("%ld (%.3f MB) allocated memory not freed!!!\n",
@@ -282,6 +284,7 @@ void print_mem(){
     info("Total freed     memory is %.3f MB\n", memfree/1024./1024.);
 }
 static __attribute__((constructor)) void init(){
+
 #define RTLD_MINE RTLD_DEFAULT
     calloc_default=(void*(*)(size_t, size_t))dlsym(RTLD_MINE, "calloc");
     malloc_default=(void*(*)(size_t))dlsym(RTLD_MINE, "malloc");

@@ -182,7 +182,7 @@ void gpu_wfsgrad_init(const PARMS_T *parms, const POWFS_T *powfs){
 		    cupowfs[ipowfs].fieldstop=curcell(nwvl,1);
 		}
 		for(int iwvl=0; iwvl<nwvl; iwvl++){
-		    cp2gpu(&cupowfs[ipowfs].embed[iwvl], locfft->embed->p[iwvl]->p(), powfs[ipowfs].loc->nloc, 1);
+		    cp2gpu(&cupowfs[ipowfs].embed[iwvl], locfft->embed->p[iwvl]->p, powfs[ipowfs].loc->nloc, 1);
 		    cupowfs[ipowfs].nembed[iwvl]=locfft->nembed->p[iwvl];
 		    if(locfft->fieldmask){
 			cp2gpu(cupowfs[ipowfs].fieldstop[iwvl], locfft->fieldmask->p[iwvl]);
@@ -385,7 +385,7 @@ void gpu_wfsgrad_init(const PARMS_T *parms, const POWFS_T *powfs){
 		}else if(parms->powfs[ipowfs].phytype_sim==2){/*cog*/
 		    if(powfs[ipowfs].cogcoeff->nx>1 || wfsind==0 || wfsgpu[iwfs]!=wfsgpu[iwfs0]){
 			cp2gpu(cuwfs[iwfs].cogcoeff, 
-			       powfs[ipowfs].cogcoeff->p[powfs[ipowfs].cogcoeff->nx>1?wfsind:0]->p(), nsa*2, 1);
+			       powfs[ipowfs].cogcoeff->p[powfs[ipowfs].cogcoeff->nx>1?wfsind:0]->p, nsa*2, 1);
 		    }else{
 			cuwfs[iwfs].cogcoeff=cuwfs[iwfs0].cogcoeff;
 		    }

@@ -28,7 +28,7 @@
 void X(scale)(X(mat) *A, R w){
     if(!A) return;
     if(w==(T)0){
-	memset(A->p, 0, sizeof(T)*A->nx*A->ny);
+	X(zero(A));
     }else{
 	for(int i=0; i<A->nx*A->ny; i++){
 	    A->p[i]*=w;
@@ -1330,7 +1330,7 @@ void X(embed)(X(mat) *restrict A, const X(mat) *restrict B, const R theta){
     const long niny=B->ny;
     const long noutx=A->nx;
     const long nouty=A->ny;
-    memset(A->p, 0, sizeof(T)*noutx*nouty);
+    X(zero)(A);
     if(fabs(theta)<1.e-10){/*no rotation. */
 	const long skipx=(noutx-ninx-1)/2;//-1 to handle odd case
 	const long skipy=(nouty-niny-1)/2;

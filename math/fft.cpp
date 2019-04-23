@@ -190,7 +190,7 @@ static void fft_threads(long nx, long ny){
     }
 }
 #ifdef __cplusplus
-#define COMP(A) reinterpret_cast<fftw_complex*>(A())
+#define COMP(A) reinterpret_cast<fftw_complex*>(A)
 #else
 #define COMP(A) A
 #endif

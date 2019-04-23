@@ -174,24 +174,24 @@ cp2gpu(Array<M,Gpu>& dest, const N*src, int nx, int ny, cudaStream_t stream=0){
 }
 static inline void cp2gpu(Real**dest, const dmat*src, cudaStream_t stream=0){
     if(!src) return;
-    cp2gpu(dest, src->p(), src->nx, src->ny, stream);
+    cp2gpu(dest, src->p, src->nx, src->ny, stream);
 }
 static inline void cp2gpu(curmat &dest, const dmat*src, cudaStream_t stream=0){
     if(!src) return;
-    cp2gpu(dest, src->p(), src->nx, src->ny, stream);
+    cp2gpu(dest, src->p, src->nx, src->ny, stream);
 }
 static inline void cp2gpu(curmat &dest, const smat*src, cudaStream_t stream=0){
     if(!src) return;
-    cp2gpu(dest, src->p(), src->nx, src->ny, stream);
+    cp2gpu(dest, src->p, src->nx, src->ny, stream);
 }
 
 static inline void cp2gpu(cucmat &dest, const cmat*src, cudaStream_t stream=0){
     if(!src) return;
-    cp2gpu(dest, src->p(), src->nx, src->ny, stream);
+    cp2gpu(dest, src->p, src->nx, src->ny, stream);
 }
 static inline void cp2gpu(cucmat &dest, const zmat*src, cudaStream_t stream=0){
     if(!src) return;
-    cp2gpu(dest, src->p(), src->nx, src->ny, stream);
+    cp2gpu(dest, src->p, src->nx, src->ny, stream);
 }
 
 void cp2gpu(cumapcell &dest, const mapcell *source);

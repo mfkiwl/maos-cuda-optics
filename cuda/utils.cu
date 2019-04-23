@@ -57,7 +57,7 @@ void cp2gpu(cumapcell &dest, const mapcell *source){
 	dest[ips]=(source->p[ips]);
     }
     for(int ips=0; ips<source->nx; ips++){
-	cp2gpu(dest[ips].p, (const dmat*)source->p[ips]);
+	cp2gpu(dest[ips], source->p[ips]);
     }
 }
 
