@@ -360,12 +360,8 @@ static void filter_cl(SIM_T *simu){
     /*hysteresis. */
     if(simu->hyst){
 	hyst_dcell(simu->hyst, simu->dmreal, simu->dmcmd);
-    }else{
-	dcellcp(&simu->dmreal, simu->dmcmd);
-    }
-  
-
-  
+    }else//dmreal and dmcmd is the same.
+    
 
     if(recon->moao && !parms->gpu.moao){
 	warning_once("moao filter implemented with LPF\n");
@@ -475,6 +471,7 @@ static void filter_ol(SIM_T *simu){
     if(simu->hyst){
 	hyst_dcell(simu->hyst, simu->dmreal, simu->dmcmd);
     }
+    save_dmreal(simu);
     /*moao DM is already taken care of automatically.*/
 }
 /**

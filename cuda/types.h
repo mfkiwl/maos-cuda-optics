@@ -407,7 +407,7 @@ __global__ void transpose(T *restrict out, const T *restrict in, int nx, int ny)
 }
 template <typename T>
 Array<T, Gpu> Transpose(Array<T, Gpu> &A, cudaStream_t stream){
-    Array<T, Gpu> B;
+    Array<T, Gpu> B(A.Ny(),A.Nx());;
     transpose<<<dim3(16,16),dim3(16,16),0,stream>>>
 	(B(), A(), A.Nx(), A.Ny());
     return B;

@@ -174,7 +174,7 @@ static void psfcomp(cuccell psfs, const curmat &iopdevl, int nwvl, int ievl, int
 	cucmat &psf=psfs[iwvl];
 	if(cuglobal->perf.psfsize[iwvl]==1){
 	    strehlcomp_do<<<REDUCE(nloc), DIM_REDUCE*sizeof(Comp),stream>>>
-		(psf(), iopdevl(), cudata->perf.amp, nloc, 2.*M_PI/cuglobal->perf.wvls[iwvl]);
+		(psf(), iopdevl, cudata->perf.amp, nloc, 2.*M_PI/cuglobal->perf.wvls[iwvl]);
 	}else{
 	    if(wvf.Nx()!=cuglobal->perf.nembed[iwvl]){
 		wvf=cucmat(cuglobal->perf.nembed[iwvl], cuglobal->perf.nembed[iwvl]);
@@ -182,7 +182,7 @@ static void psfcomp(cuccell psfs, const curmat &iopdevl, int nwvl, int ievl, int
 		Zero(wvf, stream);
 	    }
 	    embed_wvf_do<<<DIM(iopdevl.Nx(),256),0,stream>>>
-		(wvf(), iopdevl(), cudata->perf.amp, cudata->perf.embed[iwvl], nloc, cuglobal->perf.wvls[iwvl]);
+		(wvf(), iopdevl, cudata->perf.amp, cudata->perf.embed[iwvl], nloc, cuglobal->perf.wvls[iwvl]);
 	    CUFFT(cuglobal->perf.plan[iwvl+nwvl*ievl], wvf(), CUFFT_FORWARD);
 	    if(cuglobal->perf.psfsize[iwvl]<cuglobal->perf.nembed[iwvl]){
 		corner2center_do<<<DIM2(psf.Nx(),psf.Ny(),16),0,stream>>>
@@ -209,12 +209,12 @@ static void psfcomp_r(curmat *psf, const curmat &iopdevl, int nwvl, int ievl, in
 	if(!psf[iwvl]) psf[iwvl]=curmat(cuglobal->perf.psfsize[iwvl], cuglobal->perf.psfsize[iwvl]);
 	if(cuglobal->perf.psfsize[iwvl]==1){
 	    strehlcomp_do<<<REDUCE(nloc), DIM_REDUCE*sizeof(Real)*2,stream>>>
-		(wvf(), iopdevl(), cudata->perf.amp, nloc, 2.*M_PI/cuglobal->perf.wvls[iwvl]);
+		(wvf(), iopdevl, cudata->perf.amp, nloc, 2.*M_PI/cuglobal->perf.wvls[iwvl]);
 	    //do abs2.
 	    addcabs2_do<<<1,1,0,stream>>>(psf[iwvl](), 1.f, wvf(), 1.f, 1);
 	}else{
 	    embed_wvf_do<<<DIM(iopdevl.Nx(),256),0,stream>>>
-		(wvf(), iopdevl(), cudata->perf.amp, cudata->perf.embed[iwvl], nloc, cuglobal->perf.wvls[iwvl]);
+		(wvf(), iopdevl, cudata->perf.amp, cudata->perf.embed[iwvl], nloc, cuglobal->perf.wvls[iwvl]);
 	    CUFFT(cuglobal->perf.plan[iwvl+nwvl*ievl], wvf(), CUFFT_FORWARD);
 	    if(atomic){
 		corner2center_abs2_atomic_do<<<DIM2((psf[iwvl]).Nx(),(psf[iwvl]).Ny(),16),0,stream>>>
@@ -231,12 +231,12 @@ static void psfcomp_r(curmat *psf, const curmat &iopdevl, int nwvl, int ievl, in
        || (!parms->recon.split && parms->evl.nmod==3)){			\
 	cudaMemsetAsync(cc, 0, 4*sizeof(Real), stream);			\
 	calc_ptt_do<<<DIM(nloc, TT_NBX), 0, stream>>>			\
-	    (cc, cudata->perf.locs(), nloc, iopdevl(), cudata->perf.amp); \
+	    (cc, cudata->perf.locs(), nloc, iopdevl, cudata->perf.amp); \
 	cudaMemcpyAsync(ccb, cc, 4*sizeof(Real), cudaMemcpyDeviceToHost, stream); \
     }else if(parms->recon.split){					\
 	cudaMemsetAsync(cc, 0, 7*sizeof(Real), stream);			\
 	calc_ngsmod_do<<<DIM(nloc,TT_NBX),0,stream>>>			\
-	    (cc, cudata->perf.locs(), nloc, iopdevl(), cudata->perf.amp); \
+	    (cc, cudata->perf.locs(), nloc, iopdevl, cudata->perf.amp); \
 	cudaMemcpyAsync(ccb, cc, 7*sizeof(Real), cudaMemcpyDeviceToHost, stream); \
     }
 
@@ -288,10 +288,10 @@ void gpu_perfevl_queue(thread_t *info){
 	    curset(iopdevl, 0, stream);
 	}
 	if(parms->sim.idealevl){
-	    gpu_dm2loc(iopdevl(), cudata->perf.locs_dm[ievl], cudata->dmproj, parms->ndm,
+	    gpu_dm2loc(iopdevl, cudata->perf.locs_dm[ievl], cudata->dmproj, parms->ndm,
 		       parms->evl.hs->p[ievl], 0, thetax, thetay, 0,0,1, stream);
 	}else if(simu->atm && !parms->sim.wfsalias){
-	    gpu_atm2loc(iopdevl(), cudata->perf.locs, parms->evl.hs->p[ievl], 0, thetax, thetay, 
+	    gpu_atm2loc(iopdevl, cudata->perf.locs, parms->evl.hs->p[ievl], 0, thetax, thetay, 
 			0,0,parms->sim.dt,isim, 1, stream);
 	}
 	if(simu->telws){//Wind shake 
@@ -359,14 +359,15 @@ void gpu_perfevl_queue(thread_t *info){
 	if(parms->evl.tomo){
 	    TO_IMPLEMENT;
 	}else{
-	    gpu_dm2loc(iopdevl(), cudata->perf.locs_dm[ievl], cudata->dmreal, parms->ndm, 
+	    gpu_dm2loc(iopdevl, cudata->perf.locs_dm[ievl], cudata->dmreal, parms->ndm, 
 		       parms->evl.hs->p[ievl], 0, thetax, thetay,
 		       0,0,-1, stream);
+	   
 	    if(simu->ttmreal){
 		curaddptt(iopdevl, cudata->perf.locs(), 0, -simu->ttmreal->p[0], -simu->ttmreal->p[1], stream);
 	    }
 	    if(imoao!=-1){
-		gpu_dm2loc(iopdevl(), cudata->perf.locs, cudata->dm_evl[ievl], 1,
+		gpu_dm2loc(iopdevl, cudata->perf.locs, cudata->dm_evl[ievl], 1,
 			   INFINITY, 0, 0, 0, 0, 0, -1, stream);
 	    }
 	}
@@ -485,7 +486,7 @@ void gpu_perfevl_ngsr(SIM_T *simu, double *cleNGSm){
 	if(parms->evl.pttr->p[ievl]){
 	    double ptt[3];
 	    calc_ptt_do<<<DIM(nloc,TT_NBX), 0, stream>>>	
-		(cuglobal->perf.cc_cl[ievl](), cudata->perf.locs(), nloc, iopdevl(), cudata->perf.amp); 
+		(cuglobal->perf.cc_cl[ievl](), cudata->perf.locs(), nloc, iopdevl, cudata->perf.amp); 
 	    cudaMemcpyAsync(cuglobal->perf.ccb_cl[ievl], cuglobal->perf.cc_cl[ievl](), 
 			    4*sizeof(Real), cudaMemcpyDeviceToHost, stream); 
 	    calc_ptt_post(NULL, ptt,  aper->ipcc, aper->imcc, cuglobal->perf.ccb_cl[ievl]);

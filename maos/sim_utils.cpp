@@ -324,7 +324,7 @@ void atm2xloc(dcell **opdx, const SIM_T *simu){
 	return;
     }
     /*in close loop mode, opdr is from last time step. */
-    int isim=parms->sim.closeloop?simu->isim-1:simu->isim;
+    int isim=simu->reconisim;
     if(!*opdx){
 	*opdx=dcellnew(recon->npsr,1);
     }
@@ -1112,24 +1112,30 @@ static void init_simu_dm(SIM_T *simu){
     }
     for(int idm=0; idm<parms->ndm; idm++){
 	simu->dmcmd->p[idm]=dnew(recon->anloc->p[idm],1);
-	simu->dmreal->p[idm]=dnew(recon->anloc->p[idm],1);
+	if(simu->hyst){
+	    simu->dmreal->p[idm]=dnew(recon->anloc->p[idm],1);
+	}else{
+	    simu->dmreal->p[idm]=dref(simu->dmcmd->p[idm]);
+	}
 
 	if(simu->dmrealsq){
 	    simu->dmrealsq->p[idm]=mapnew2(recon->amap->p[idm]);
-	    dset((dmat*)simu->dmrealsq->p[idm], invalid_val);
+	    dset(simu->dmrealsq->p[idm], invalid_val);
 	}
 	if(simu->dmprojsq){
 	    simu->dmprojsq->p[idm]=mapnew2(recon->amap->p[idm]);
-	    dset((dmat*)simu->dmprojsq->p[idm], invalid_val);
+	    dset(simu->dmprojsq->p[idm], invalid_val);
 	}
 	if(parms->fit.square){/*dmreal is already square.*/
 	    //free(simu->dmrealsq->p[idm]->p);
-	    simu->dmrealsq->p[idm]->Replace(simu->dmreal->p[idm]->p);
+	    simu->dmrealsq->p[idm]->Replace(*simu->dmreal->p[idm]);
+	    //*simu->dmrealsq->p[idm]=*simu->dmreal->p[idm];
 	    //free(simu->dmrealsq->p[idm]->nref);
 	    //simu->dmrealsq->p[idm]->nref=NULL;
 	    if(simu->dmprojsq){
 		//free(simu->dmprojsq->p[idm]->p);
-		simu->dmprojsq->p[idm]->Replace(simu->dmproj->p[idm]->p);
+		simu->dmprojsq->p[idm]->Replace(*simu->dmproj->p[idm]);
+		//*simu->dmprojsq->p[idm]=*simu->dmproj->p[idm];;
 		//free(simu->dmprojsq->p[idm]->nref);
 		//simu->dmprojsq->p[idm]->nref=NULL;
 	    }

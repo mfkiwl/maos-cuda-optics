@@ -51,7 +51,7 @@ static inline void cuwritedata(const Array<T, Gpu> &A, file_t *fp){
     free(header);
 }
 template <typename T>
-static inline void cuwrite(const Array<T, Gpu> &A, const char *format, ...)CHECK_ARG(2){
+void cuwrite(const Array<T, Gpu> &A, const char *format, ...)CHECK_ARG(2){
     format2fn;
     file_t *fp=zfopen(fn, "wb");
     cuwritedata<T>(A, fp);
@@ -59,7 +59,7 @@ static inline void cuwrite(const Array<T, Gpu> &A, const char *format, ...)CHECK
 }
 
 template <typename T>
-static inline void cuwrite(const CuCell<T> &A, const char *format, ...)CHECK_ARG(2){
+void cuwrite(const CuCell<T> &A, const char *format, ...)CHECK_ARG(2){
     format2fn;
     file_t *fp=zfopen(fn, "wb");
     header_t header={MCC_ANY, A?(uint64_t)A.Nx():0, A?(uint64_t)A.Ny():0, NULL};

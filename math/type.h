@@ -67,20 +67,11 @@ public:
 	 x.init(nzmax);
 	}
     }
-    virtual void deinit(){
-	/*if(nref && !atomicadd(nref, -1)){
-	    free(p);
-	    free(i);
-	    free(x);
-	    free(nref);
-	}
-	nref=0;*/
+    virtual ~Sparse(){
 	if(header) free(header);
     }
-    virtual ~Sparse(){deinit();}
     Sparse &operator=(const Sparse &in){
 	if (this != &in){
-	    deinit();
 	    x=in.x;
 	    p=in.p;
 	    i=in.i;
@@ -138,7 +129,12 @@ public:
     map_t(long nxi, long nyi, double dxi=1./64., double dyi=1./64., double *pi=0)
 	:Parent(nxi, nyi, pi, 1), dx(dxi), dy(dyi),ox(-nx/2*dx),oy(-ny/2*dy),h(0),vx(0),vy(0),iac(0){
     }
-    map_t(Parent in):Parent(in), dx(1./64), dy(1./64), ox(-nx/2*dx), oy(-ny/2*dy), h(0), vx(0), vy(0), iac(0){}
+    map_t(Parent &in):Parent(in), dx(1./64), dy(1./64), ox(-nx/2*dx), oy(-ny/2*dy), h(0), vx(0), vy(0), iac(0){}
+    //Only overwrite the underlining data.
+    map_t &operator=(const Parent &in){
+	Parent::operator=(in);
+	return *this;
+    }
 };
 
 /**
@@ -255,7 +251,7 @@ class cell:public Array<TwoDim*>{
 public:						
     TwoDim* m;						
     cell(long nxi, long nyi):Array<TwoDim*>(nxi, nyi),m(0){}	
-    virtual void deinit()override { 
+    void deinit() { 
 	for(long ii=0; ii<nx*ny; ii++){			
 	    delete p[ii];
 	    p[ii]=0;
@@ -272,7 +268,7 @@ public:
     public:						\
     T* m;						\
     C(long nxi, long nyi):Array<T*>(nxi, nyi),m(0){}	\
-    virtual void deinit()override {			\
+    void deinit() {				\
 	for(long ii=0; ii<nx*ny; ii++){			\
 	    delete p[ii];				\
 	}						\

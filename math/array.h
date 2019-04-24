@@ -96,7 +96,8 @@ protected:
     T *p;  //The memory address for access
  
 public:
-    virtual void deinit(){
+    //deinit() should never be virtual.
+    void deinit(){
 	if(nref && !atomicadd(nref, -1)){
 	    delete[] p0;
 	    delete nref;
@@ -169,6 +170,10 @@ public:
     void Replace(T* pnew){
 	deinit();
 	p=pnew;
+    }
+   //Replace content, referencing new data.
+    void Replace(const RefP&in){
+	operator=(in);
     }
     //Resize the memory. We use element-wise copy because T may be class time
     void Resize(long ni){
@@ -272,7 +277,7 @@ public: //temporary for backward compatibility before conversion is done. /todo
 public:
     using Parent::operator();
     using Parent::p;
- 
+    using Parent::Replace;
     T&operator ()(long ix, long iy){
 	assert(ix>=0 && ix<nx && iy>=0 && iy<ny);
 	return p[ix+nx*iy];
@@ -298,7 +303,8 @@ public:
 	nx=nxi;
 	ny=nyi;
     }
-    virtual void deinit(){
+    //deinit should not be virtual
+    void deinit(){
 	Parent::deinit();
 	nx=0;
 	ny=0;
@@ -362,10 +368,6 @@ public:
 	    }
 	}
 	*this=B;
-    }
-    //Replace underlining vector
-    void Replace(T* pnew){
-	Parent::Replace(pnew);
     }
 };
 

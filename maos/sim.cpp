@@ -113,7 +113,7 @@ void maos_isim(int isim){
     double ck_0=myclockd();
     simu->isim=isim;
     simu->status->isim=isim;
-    if(parms->sim.idealfit || parms->sim.idealtomo || !parms->sim.closeloop){
+    if(!parms->sim.closeloop){
 	simu->reconisim=simu->isim;
     }else{//work on gradients from last time step for parallelization.
 	simu->reconisim=simu->isim-1;
@@ -152,7 +152,6 @@ void maos_isim(int isim){
 	    }
 #endif
 	}
-	save_dmreal(simu);
 	if(PARALLEL){
 	    /*
 	      We do the big loop in parallel to make better use the

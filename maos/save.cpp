@@ -95,6 +95,7 @@ void save_gradol(SIM_T *simu){
 void save_recon(SIM_T *simu){
     const PARMS_T *parms=simu->parms;
     const RECON_T *recon=simu->recon;
+    if(simu->reconisim<0) return;
     if(parms->plot.run){
 	for(int idm=0; simu->dmerr && idm<parms->ndm; idm++){
 	    if(simu->dmint->mint->p[0]->p[idm]){
@@ -165,7 +166,7 @@ void save_recon(SIM_T *simu){
 		atm2xloc(&opdx, simu);
 	    }
 	    if(parms->save.opdx){
-		zfarr_push(simu->save->opdx, simu->isim, opdx);
+		zfarr_push(simu->save->opdx, simu->reconisim, opdx);
 	    }
 	    if(parms->plot.opdx){ /*draw opdx */
 		for(int i=0; i<opdx->nx; i++){
@@ -253,11 +254,14 @@ void save_dmreal(SIM_T *simu){
 	}
     }
     if(parms->save.dm){
-	zfarr_push(simu->save->dmreal, simu->isim, simu->dmreal);
-	zfarr_push(simu->save->dmcmd, simu->isim, simu->dmcmd);
-	if(simu->ttmreal){
-	    simu->save->ttmreal->p[simu->isim*2]=simu->ttmreal->p[0];
-	    simu->save->ttmreal->p[simu->isim*2+1]=simu->ttmreal->p[1];
+	int isim=(parms->sim.closeloop?1:0)+simu->isim;
+	if(isim>=0){
+	    zfarr_push(simu->save->dmreal, isim, simu->dmreal);
+	    zfarr_push(simu->save->dmcmd, isim, simu->dmcmd);
+	    if(simu->ttmreal){
+		simu->save->ttmreal->p[isim*2]=simu->ttmreal->p[0];
+		simu->save->ttmreal->p[isim*2+1]=simu->ttmreal->p[1];
+	    }
 	}
     }
 }
