@@ -252,10 +252,17 @@ void save_dmreal(SIM_T *simu){
 			"DM Actuator Stroke","x (m)", "y (m)", "Real %d",idm);
 	    }
 	}
+	//2014-05-28: moved from filter.c to here for synchronous display with dmint.
+	for(int idm=0; idm<parms->ndm; idm++){
+	    if(simu->dmpsol && simu->dmpsol->p[idm]){
+		drawopd("DM", simu->recon->aloc->p[idm], simu->dmpsol->p[idm]->p,parms->dbg.draw_opdmax->p,
+			"DM PSOL","x (m)", "y (m)", "PSOL %d",idm);
+	    }
+	}
     }
     if(parms->save.dm){
 	int isim=(parms->sim.closeloop?1:0)+simu->isim;
-	if(isim>=0){
+	if(isim>=0 && isim<parms->sim.end){
 	    zfarr_push(simu->save->dmreal, isim, simu->dmreal);
 	    zfarr_push(simu->save->dmcmd, isim, simu->dmcmd);
 	    if(simu->ttmreal){

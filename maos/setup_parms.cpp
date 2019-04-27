@@ -1067,6 +1067,7 @@ static void readcfg_dbg(PARMS_T *parms){
     READ_INT(dbg.lo_blend);
     READ_DBL(dbg.eploscale);
     READ_INT(dbg.ahst_keepfocus);
+    READ_INT(dbg.recon_stuck);
 }
 /**
    Read in GPU options
